@@ -3,16 +3,19 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const router = useRouter();
 
   const handleSubmit = (e: React.MouseEvent) => {
     e.preventDefault();
     // Lógica de registro aquí
+    router.push("/");
   };
 
   return (
