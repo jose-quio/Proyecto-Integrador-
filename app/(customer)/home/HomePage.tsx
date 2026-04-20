@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { ArrowRight, Car, Globe, Shield, Star } from "lucide-react";
 import { motion } from "framer-motion";
