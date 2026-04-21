@@ -10,7 +10,7 @@ export default function AuthPage() {
   const router = useRouter();
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-[#0f0f0f]">
+    <div className="h-screen w-screen flex overflow-hidden bg-[#0f0f0f] relative">
 
       {/* ── FORMULARIO LOGIN ─────────────────────────── */}
       <div
@@ -26,12 +26,12 @@ export default function AuthPage() {
         `}
       >
         <Logo />
-        <div className="mb-6 mt-5">
+        <div className="mb-4 mt-3">
           <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
             Bienvenido<br />
             <span className="text-amber-400">de vuelta.</span>
           </h1>
-          <p className="mt-3 text-white/50 text-sm">Inicia sesión para continuar explorando Arequipa.</p>
+          <p className="mt-1 text-white/50 text-sm">Inicia sesión para continuar explorando Arequipa.</p>
         </div>
 
         <div className="space-y-4">
@@ -83,7 +83,7 @@ export default function AuthPage() {
         `}
       >
         <Logo />
-        <div className="mb-4 mt-3">
+        <div className="mb-2 mt-2">
           <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
             Crea tu<br />
             <span className="text-amber-400">cuenta.</span>
@@ -249,7 +249,7 @@ function Field({ label, type, placeholder }: { label: string; type: string; plac
 
 function Divider({ text }: { text: string }) {
   return (
-    <div className="my-4 flex items-center gap-4">
+    <div className="my-3 flex items-center gap-4">
       <div className="flex-1 h-px bg-white/10" />
       <span className="text-white/30 text-xs">{text}</span>
       <div className="flex-1 h-px bg-white/10" />
