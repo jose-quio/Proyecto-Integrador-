@@ -1,8 +1,9 @@
+//components/layout/navigation.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X, User, LogOut, Plane } from "lucide-react";
 
 export default function Navigation() {
@@ -10,8 +11,14 @@ export default function Navigation() {
   const pathname = usePathname();
 
   // ⚠️ luego lo conectarás con Firebase
-  const isAuthenticated = false;
-  const user = {name:"Jose"};
+  const [user, setUser] = useState<null | { name: string; email: string }>(null);
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+  const isAuthenticated = !!user;
   
   const navLinks = [
     { path: "/", label: "Inicio" },
@@ -66,16 +73,22 @@ export default function Navigation() {
             {isAuthenticated ? (
               <>
                 <Link
-                  href="/perfil"
+                  href="dashboard"
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#3d2820] text-[#f4e8d9] hover:bg-[#d4663a] hover:text-white transition-all"
                 >
                   <User className="w-4 h-4" />
                   <span>{user?.name}</span>
                 </Link>
 
-                <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820] transition-all">
+                <button
+                onClick={() => {
+                  localStorage.removeItem("user");
+                  window.location.reload();
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820] transition-all"
+                >
                   <LogOut className="w-4 h-4" />
-                </button>
+                  </button>
               </>
             ) : (
               <Link
@@ -120,7 +133,7 @@ export default function Navigation() {
               {isAuthenticated ? (
                 <>
                   <Link
-                    href="/perfil"
+                    href="dashboard"
                     onClick={() => setIsOpen(false)}
                     className="block px-4 py-3 rounded-lg bg-[#3d2820] text-[#f4e8d9] mb-2"
                   >
@@ -128,7 +141,11 @@ export default function Navigation() {
                   </Link>
 
                   <button
-                    onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    localStorage.removeItem("user");
+                    setIsOpen(false);
+                    window.location.reload();
+                  }}
                     className="w-full text-left px-4 py-3 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820]"
                   >
                     Cerrar Sesión

@@ -1,3 +1,4 @@
+//REGISTER
 "use client";
 
 import { useState } from "react";
@@ -10,13 +11,36 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const router = useRouter();
+  
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-  const handleSubmit = (e: React.MouseEvent) => {
-    e.preventDefault();
-    // Lógica de registro aquí
-    router.push("/");
-  };
+  if (!name || !email || !password || !confirm) {
+    alert("Completa todos los campos");
+    return;
+  }
+
+  if (password !== confirm) {
+    alert("Las contraseñas no coinciden");
+    return;
+  }
+
+  if (!accepted) {
+    alert("Debes aceptar los términos");
+    return;
+  }
+
+  await new Promise((res) => setTimeout(res, 500));
+
+  const user = {
+  name,
+  email,
+};
+localStorage.setItem("user", JSON.stringify(user));
+router.push("/dashboard");
+};
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#0f0f0f]">
@@ -32,7 +56,7 @@ export default function RegisterPage() {
           priority
         />
         {/* Overlay gradiente (de derecha a izquierda, invertido) */}
-        <div className="absolute inset-0 bg-gradient-to-l from-[#0f0f0f] via-[#0f0f0f]/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-l from-[#0f0f0f] via-[#0f0f0f]/20 to-transparent" />
         <div className="absolute inset-0 bg-black/30" />
 
         {/* Texto sobre la imagen */}
@@ -53,7 +77,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Panel derecho - Formulario (ahora a la derecha en register) */}
-      <div className="relative z-10 flex flex-col justify-center max-h-screen overflow-hidden w-full lg:w-[55%] sm:px-10 lg:px-16 py-4 py-6 bg-[#0f0f0f] order-2">
+      <div className="relative z-10 flex flex-col justify-center max-h-screen overflow-hidden w-full lg:w-[55%] sm:px-10 lg:px-16 py-6 bg-[#0f0f0f] order-2">
 
         {/* Logo */}
         <div className="mb-0">
@@ -84,7 +108,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Formulario */}
-        <div className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1">
@@ -140,8 +164,13 @@ export default function RegisterPage() {
 
           {/* Términos */}
           <label className="flex items-start gap-3 cursor-pointer group">
-            <div className="mt-0.5 w-4 h-4 rounded border border-white/20 bg-white/5 flex items-center justify-center flex-shrink-0 group-hover:border-amber-400/50 transition-colors">
-              <input type="checkbox" className="sr-only" />
+            <div className="mt-0.5 w-4 h-4 rounded border border-white/20 bg-white/5 flex items-center justify-center shrink-0 group-hover:border-amber-400/50 transition-colors">
+              <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              className="sr-only"
+              />
             </div>
             <span className="text-white/40 text-xs leading-relaxed">
               Acepto los{" "}
@@ -156,12 +185,12 @@ export default function RegisterPage() {
           </label>
 
           <button
-            onClick={handleSubmit}
+            type="submit"
             className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-2.5 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20 hover:shadow-amber-400/40 hover:scale-[1.01] active:scale-[0.99]"
           >
             Crear cuenta
           </button>
-        </div>
+        </form>
 
         {/* Divider */}
         <div className="my-4 flex items-center gap-4">

@@ -1,3 +1,4 @@
+//LOGIN
 "use client";
 
 import { useState } from "react";
@@ -9,12 +10,26 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
+  
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
 
-  const handleSubmit = (e: React.MouseEvent) => {
-    e.preventDefault();
-    // Lógica de login aquí
-    router.push("/"); 
+  if (!email || !password) {
+    alert("Completa todos los campos");
+    return;
+  }
+
+  const user = {
+    name: email.split("@")[0],
+    email: email,
   };
+
+  localStorage.setItem("user", JSON.stringify(user));
+
+  await new Promise((res) => setTimeout(res, 500));
+
+  router.push("/dashboard"); // o /customer/dashboard si usas ese
+};
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#0f0f0f]">
@@ -51,7 +66,7 @@ export default function LoginPage() {
         </div>
 
         {/* Formulario */}
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="group">
             <label className="block text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">
               Correo electrónico
@@ -84,12 +99,12 @@ export default function LoginPage() {
           </div>
 
           <button
-            onClick={handleSubmit}
+            type="submit"
             className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3.5 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20 hover:shadow-amber-400/40 hover:scale-[1.01] active:scale-[0.99]"
           >
             Ingresar
           </button>
-        </div>
+        </form>
 
         {/* Divider */}
         <div className="my-5 flex items-center gap-4">
