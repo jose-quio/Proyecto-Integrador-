@@ -10,11 +10,23 @@ import {
   Users,
   Truck,
   Settings,
-  PanelLeft
+  PanelLeft,
+  CreditCard,
+  BarChart3
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+const navLinks = [
+  { href: "/admin",           icon: <Home size={20} />,        label: "Dashboard"    },
+  { href: "/admin/tours",     icon: <Map size={20} />,         label: "Tours"        },
+  { href: "/admin/reservas",  icon: <CalendarCheck size={20}/>, label: "Reservas"    },
+  { href: "/admin/usuarios",  icon: <Users size={20} />,       label: "Usuarios"     },
+  { href: "/admin/proveedores",icon: <Truck size={20} />,      label: "Proveedores"  },
+  { href: "/admin/pagos",     icon: <CreditCard size={20} />,  label: "Pagos"        },
+  { href: "/admin/reportes",  icon: <BarChart3 size={20} />,   label: "Reportes"     },
+];
 
 export default function AdminLayout({
   children,
@@ -23,7 +35,7 @@ export default function AdminLayout({
 }) {
   return (
     <div className="flex min-h-screen bg-muted/40">
-      
+
       {/* SIDEBAR DESKTOP */}
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-16 flex-col border-r bg-white sm:flex">
         <nav className="flex flex-col items-center gap-4 py-6">
@@ -36,11 +48,9 @@ export default function AdminLayout({
             A
           </Link>
 
-          <NavItem href="/admin" icon={<Home size={20} />} />
-          <NavItem href="/admin/tours" icon={<Map size={20} />} />
-          <NavItem href="/admin/reservas" icon={<CalendarCheck size={20} />} />
-          <NavItem href="/admin/usuarios" icon={<Users size={20} />} />
-          <NavItem href="/admin/proveedores" icon={<Truck size={20} />} />
+          {navLinks.map((link) => (
+            <NavItem key={link.href} href={link.href} icon={link.icon} />
+          ))}
         </nav>
 
         {/* SETTINGS */}
@@ -51,13 +61,10 @@ export default function AdminLayout({
 
       {/* CONTENIDO */}
       <div className="flex flex-col flex-1 sm:pl-16">
-        
+
         {/* HEADER */}
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-white px-4">
-          
-          {/* MOBILE MENU */}
           <MobileNav />
-
           <h1 className="font-semibold text-sm text-gray-700">
             Panel Administrativo
           </h1>
@@ -72,15 +79,14 @@ export default function AdminLayout({
   );
 }
 
-function NavItem({
-  href,
-  icon,
-}: {
-  href: string;
-  icon: React.ReactNode;
-}) {
+function NavItem({ href, icon }: { href: string; icon: React.ReactNode }) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+
+  // Para /admin exacto no marcar activo si estamos en /admin/tours, etc.
+  const isActive =
+    href === "/admin"
+      ? pathname === "/admin"
+      : pathname.startsWith(href);
 
   return (
     <Link
@@ -107,11 +113,16 @@ function MobileNav() {
 
       <SheetContent side="left">
         <nav className="flex flex-col gap-4 mt-6 text-sm">
-          <Link href="/admin">Dashboard</Link>
-          <Link href="/admin/tours">Tours</Link>
-          <Link href="/admin/reservas">Reservas</Link>
-          <Link href="/admin/usuarios">Usuarios</Link>
-          <Link href="/admin/proveedores">Proveedores</Link>
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-3 text-gray-700 hover:text-[#d4663a] transition"
+            >
+              {link.icon}
+              {link.label}
+            </Link>
+          ))}
         </nav>
       </SheetContent>
     </Sheet>
