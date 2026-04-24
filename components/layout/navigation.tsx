@@ -12,16 +12,8 @@ export default function Navigation() {
 
   // ⚠️ luego lo conectarás con Firebase
   const [user, setUser] = useState<null | { name: string; email: string }>(null);
-  useEffect(() => {
-<<<<<<< Updated upstream
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-  const isAuthenticated = !!user;
   
-=======
+  useEffect(() => {
     const loadUser = () => {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
@@ -31,19 +23,15 @@ export default function Navigation() {
       }
     };
 
-    // cargar al inicio
     loadUser();
-
-    // 🔥 escuchar cambios
     window.addEventListener("authChanged", loadUser);
 
     return () => {
       window.removeEventListener("authChanged", loadUser);
     };
   }, []);
+  
   const isAuthenticated = !!user;
-
->>>>>>> Stashed changes
   const navLinks = [
     { path: "/", label: "Inicio" },
     { path: "/about", label: "Nosotros" },
@@ -105,27 +93,15 @@ export default function Navigation() {
                 </Link>
 
                 <button
-<<<<<<< Updated upstream
-                onClick={() => {
-                  localStorage.removeItem("user");
-                  window.location.reload();
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820] transition-all"
-=======
                   onClick={() => {
                     localStorage.removeItem("user");
-
-                    // 🔥 notifica a toda la app
                     window.dispatchEvent(new Event("authChanged"));
-
-                    // 🔥 redirige sin recargar
                     window.location.href = "/";
                   }}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820] transition-all"
->>>>>>> Stashed changes
                 >
                   <LogOut className="w-4 h-4" />
-                  </button>
+                </button>
               </>
             ) : (
               <Link
@@ -177,19 +153,12 @@ export default function Navigation() {
                   </Link>
 
                   <button
-<<<<<<< Updated upstream
-                  onClick={() => {
-                    localStorage.removeItem("user");
-                    setIsOpen(false);
-                    window.location.reload();
-                  }}
-=======
                     onClick={() => {
                       localStorage.removeItem("user");
                       setIsOpen(false);
-                      window.location.reload();
+                      window.dispatchEvent(new Event("authChanged"));
+                      window.location.href = "/";
                     }}
->>>>>>> Stashed changes
                     className="w-full text-left px-4 py-3 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820]"
                   >
                     Cerrar Sesión
