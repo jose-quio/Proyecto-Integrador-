@@ -36,7 +36,7 @@ export default function Navigation() {
     { path: "/", label: "Inicio" },
     { path: "/about", label: "Nosotros" },
     { path: "/destinos", label: "Destinos" },
-    { path: "/tours", label: "Tours" },
+    { path: "/destinations", label: "Tours" },
     { path: "/reservar", label: "Reservar" },
   ];
 
