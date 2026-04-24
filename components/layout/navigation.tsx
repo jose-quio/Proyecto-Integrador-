@@ -12,19 +12,32 @@ export default function Navigation() {
 
   // ⚠️ luego lo conectarás con Firebase
   const [user, setUser] = useState<null | { name: string; email: string }>(null);
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-  const isAuthenticated = !!user;
   
+  useEffect(() => {
+    const loadUser = () => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
+      }
+    };
+
+    loadUser();
+    window.addEventListener("authChanged", loadUser);
+
+    return () => {
+      window.removeEventListener("authChanged", loadUser);
+    };
+  }, []);
+  
+  const isAuthenticated = !!user;
   const navLinks = [
     { path: "/", label: "Inicio" },
     { path: "/about", label: "Nosotros" },
+    { path: "/destinos", label: "Destinos" },
     { path: "/tours", label: "Tours" },
-    { path: "/reservas", label: "Reservas" },
+    { path: "/reservar", label: "Reservar" },
   ];
 
   const isActive = (path: string) => {
@@ -35,7 +48,7 @@ export default function Navigation() {
   return (
     <nav className="sticky top-0 z-50 bg-[#2a1810] border-b border-[#d4663a]/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="flex justify-between items-center h-20">
 
           {/* LOGO */}
@@ -57,11 +70,10 @@ export default function Navigation() {
               <Link
                 key={link.path}
                 href={link.path}
-                className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-                  isActive(link.path)
-                    ? "bg-[#d4663a] text-white"
-                    : "text-[#f4e8d9] hover:bg-[#3d2820] hover:text-white"
-                }`}
+                className={`px-4 py-2 rounded-lg transition-all duration-300 ${isActive(link.path)
+                  ? "bg-[#d4663a] text-white"
+                  : "text-[#f4e8d9] hover:bg-[#3d2820] hover:text-white"
+                  }`}
               >
                 {link.label}
               </Link>
@@ -81,14 +93,15 @@ export default function Navigation() {
                 </Link>
 
                 <button
-                onClick={() => {
-                  localStorage.removeItem("user");
-                  window.location.reload();
-                }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820] transition-all"
+                  onClick={() => {
+                    localStorage.removeItem("user");
+                    window.dispatchEvent(new Event("authChanged"));
+                    window.location.href = "/";
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820] transition-all"
                 >
                   <LogOut className="w-4 h-4" />
-                  </button>
+                </button>
               </>
             ) : (
               <Link
@@ -112,24 +125,23 @@ export default function Navigation() {
         {/* MOBILE MENU */}
         {isOpen && (
           <div className="lg:hidden py-4 border-t border-[#d4663a]/20">
-            
+
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 href={link.path}
                 onClick={() => setIsOpen(false)}
-                className={`block px-4 py-3 rounded-lg mb-1 transition-all ${
-                  isActive(link.path)
-                    ? "bg-[#d4663a] text-white"
-                    : "text-[#f4e8d9] hover:bg-[#3d2820]"
-                }`}
+                className={`block px-4 py-3 rounded-lg mb-1 transition-all ${isActive(link.path)
+                  ? "bg-[#d4663a] text-white"
+                  : "text-[#f4e8d9] hover:bg-[#3d2820]"
+                  }`}
               >
                 {link.label}
               </Link>
             ))}
 
             <div className="mt-4 pt-4 border-t border-[#d4663a]/20">
-              
+
               {isAuthenticated ? (
                 <>
                   <Link
@@ -141,11 +153,12 @@ export default function Navigation() {
                   </Link>
 
                   <button
-                  onClick={() => {
-                    localStorage.removeItem("user");
-                    setIsOpen(false);
-                    window.location.reload();
-                  }}
+                    onClick={() => {
+                      localStorage.removeItem("user");
+                      setIsOpen(false);
+                      window.dispatchEvent(new Event("authChanged"));
+                      window.location.href = "/";
+                    }}
                     className="w-full text-left px-4 py-3 rounded-lg text-[#f4e8d9] hover:bg-[#3d2820]"
                   >
                     Cerrar Sesión
