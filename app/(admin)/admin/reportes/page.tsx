@@ -424,7 +424,7 @@ export default function ReportesPage() {
                         <Cell key={i} fill={e.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v: number) => [`${v} reservas`]} />
+                    <Tooltip formatter={(v) => [`${v} reservas`]} />
                     <Legend
                       formatter={(val, entry: any) =>
                         `${val}: ${entry.payload.value} (${pct(entry.payload.value, totalReservas)}%)`
