@@ -35,8 +35,8 @@ export default function Navigation() {
   const navLinks = [
     { path: "/", label: "Inicio" },
     { path: "/about", label: "Nosotros" },
-    { path: "/destinos", label: "Destinos" },
-    { path: "/destinations", label: "Tours" },
+    { path: "/transport", label: "Transportes" },
+    { path: "/destinations", label: "Paquetes" },
     { path: "/reservar", label: "Reservar" },
   ];
 

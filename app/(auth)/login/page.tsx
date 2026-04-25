@@ -9,53 +9,109 @@ export default function AuthPage() {
   const [isRegister, setIsRegister] = useState(false);
   const router = useRouter();
 
+  // Credenciales de prueba:
+// Cliente:       cliente@test.com  /  cliente123
+// Administrador: admin@test.com    /  admin123
+
+const TEST_USERS = [
+  { email: "cliente@test.com", password: "cliente123", redirect: "/dashboard" },
+  { email: "admin@test.com",   password: "admin123",   redirect: "/admin" },
+];
+
+// Agrega estos estados al componente:
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [error, setError] = useState("");
+
+// Función de login:
+const handleLogin = () => {
+  const user = TEST_USERS.find(
+    (u) => u.email === email && u.password === password
+  );
+  if (user) {
+    router.push(user.redirect);
+  } else {
+    setError("Correo o contraseña incorrectos.");
+  }
+};
+
   return (
+
     <div className="h-screen w-screen flex overflow-hidden bg-[#0f0f0f] relative">
 
       {/* ── FORMULARIO LOGIN ─────────────────────────── */}
-      <div
-        className={`
-          absolute top-0 left-0 w-full lg:w-1/2 h-full z-20
-          flex flex-col justify-center
-          px-8 sm:px-14 lg:px-16 pb-16 lg:pb-0
-          bg-[#0f0f0f]
-          transition-all duration-700 ease-in-out
-          ${isRegister
-            ? "opacity-0 pointer-events-none lg:-translate-x-full"
-            : "opacity-100 pointer-events-auto lg:translate-x-0"}
-        `}
-      >
-        <Logo />
-        <div className="mb-4 mt-3">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
-            Bienvenido<br />
-            <span className="text-amber-400">de vuelta.</span>
-          </h1>
-          <p className="mt-1 text-white/50 text-sm">Inicia sesión para continuar explorando Arequipa.</p>
-        </div>
+<div
+  className={`
+    absolute top-0 left-0 w-full lg:w-1/2 h-full z-20
+    flex flex-col justify-center
+    px-8 sm:px-14 lg:px-16 pb-16 lg:pb-0
+    bg-[#0f0f0f]
+    transition-all duration-700 ease-in-out
+    ${isRegister
+      ? "opacity-0 pointer-events-none lg:-translate-x-full"
+      : "opacity-100 pointer-events-auto lg:translate-x-0"}
+  `}
+>
+  <Logo />
+  <div className="mb-4 mt-3">
+    <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
+      Bienvenido<br />
+      <span className="text-amber-400">de vuelta.</span>
+    </h1>
+    <p className="mt-1 text-white/50 text-sm">
+      Inicia sesión para continuar explorando Arequipa.
+    </p>
+  </div>
 
-        <div className="space-y-4">
-          <Field label="Correo electrónico" type="email" placeholder="tu@correo.com" />
-          <div>
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Contraseña</span>
-              <button className="text-xs text-amber-400/80 hover:text-amber-400 transition-colors">
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-amber-400/50 transition-all duration-200"
-            />
-          </div>
-          <button
-            onClick={() => router.push("/")}
-            className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20 hover:scale-[1.01] active:scale-[0.99]"
-          >
-            Ingresar
-          </button>
-        </div>
+  <div className="space-y-4">
+
+    {/* Email */}
+    <div>
+      <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1.5 block">
+        Correo electrónico
+      </span>
+      <input
+        type="email"
+        placeholder="tu@correo.com"
+        value={email}
+        onChange={(e) => { setEmail(e.target.value); setError(""); }}
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-amber-400/50 transition-all duration-200"
+      />
+    </div>
+
+    {/* Contraseña */}
+    <div>
+      <div className="flex justify-between items-center mb-1.5">
+        <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
+          Contraseña
+        </span>
+        <button className="text-xs text-amber-400/80 hover:text-amber-400 transition-colors">
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+      <input
+        type="password"
+        placeholder="••••••••"
+        value={password}
+        onChange={(e) => { setPassword(e.target.value); setError(""); }}
+        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-amber-400/50 transition-all duration-200"
+      />
+    </div>
+
+    {/* Error */}
+    {error && (
+      <p className="text-red-400 text-xs text-center -mt-1">{error}</p>
+    )}
+
+    {/* Botón */}
+    <button
+      onClick={handleLogin}
+      className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20 hover:scale-[1.01] active:scale-[0.99]"
+    >
+      Ingresar
+    </button>
+
+  </div>
 
         <Divider text="O continúa con" />
         <GoogleBtn />
