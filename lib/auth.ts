@@ -12,11 +12,13 @@ export function guardarSesion(data: AuthResponse) {
     nombreCompleto: data.nombreCompleto,
     rol: data.rol,
   }));
+  window.dispatchEvent(new Event("authChanged"));
 }
  
 export function limpiarSesion() {
   localStorage.removeItem("token");
   localStorage.removeItem("usuario");
+  window.dispatchEvent(new Event("authChanged"));
 }
  
 export function obtenerUsuarioLocal() {
