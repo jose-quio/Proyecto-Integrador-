@@ -4,36 +4,112 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { login, register, loginConGoogle, getRutaPorRol} from "@/lib/auth";
 
 export default function AuthPage() {
   const [isRegister, setIsRegister] = useState(false);
   const router = useRouter();
+  // ── Estados del formulario ────────────────────────────────
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [registerData, setRegisterData] = useState({
+    nombreCompleto: "", email: "", password: "", confirmar: "", telefono: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Credenciales de prueba:
-// Cliente:       cliente@test.com  /  cliente123
-// Administrador: admin@test.com    /  admin123
+  // errors
+  const [loginErrors, setLoginErrors]     = useState({ email: "", password: "" });
+  const [registerErrors, setRegisterErrors] = useState({
+    nombreCompleto: "", email: "", password: "", confirmar: "", telefono: ""
+  });
 
-const TEST_USERS = [
-  { email: "cliente@test.com", password: "cliente123", redirect: "/dashboard" },
-  { email: "admin@test.com",   password: "admin123",   redirect: "/admin" },
-];
+  // Función de validación
+  const validarLogin = () => {
+    const errors = { email: "", password: "" };
+    if (!loginData.email) errors.email = "El correo es obligatorio";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginData.email))
+      errors.email = "Ingresa un correo válido";
+    if (!loginData.password) errors.password = "La contraseña es obligatoria";
+    setLoginErrors(errors);
+    return !errors.email && !errors.password;
+  };
 
-// Agrega estos estados al componente:
-const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [error, setError] = useState("");
+  const validarRegister = () => {
+    const errors = { nombreCompleto: "", email: "", password: "", confirmar: "", telefono: "" };
+    if (!registerData.nombreCompleto) errors.nombreCompleto = "El nombre es obligatorio";
+    if (!registerData.email) errors.email = "El correo es obligatorio";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registerData.email))
+      errors.email = "Ingresa un correo válido";
+    if (!registerData.password) errors.password = "La contraseña es obligatoria";
+    else if (registerData.password.length < 8)
+      errors.password = "Mínimo 8 caracteres";
+    if (registerData.confirmar !== registerData.password)
+      errors.confirmar = "Las contraseñas no coinciden";
+    if (registerData.telefono && !/^\d{9,}$/.test(registerData.telefono))
+      errors.telefono = "Ingresa un teléfono válido";
+    setRegisterErrors(errors);
+    return !Object.values(errors).some(Boolean);
+  };
 
-// Función de login:
-const handleLogin = () => {
-  const user = TEST_USERS.find(
-    (u) => u.email === email && u.password === password
-  );
-  if (user) {
-    router.push(user.redirect);
-  } else {
-    setError("Correo o contraseña incorrectos.");
-  }
-};
+  // ── Handlers ──────────────────────────────────────────────
+ 
+  const handleLogin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!validarLogin()) return;
+    setError("");
+    setLoading(true);
+    try {
+      const res = await login({ email: loginData.email, password: loginData.password });
+      router.push(getRutaPorRol(res.rol));
+    } catch {
+      setError("Email o contraseña incorrectos");
+    } finally {
+      setLoading(false);
+    }
+  };
+ 
+  const handleRegister = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!validarRegister()) return;
+    setError("");
+    if (registerData.password !== registerData.confirmar) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+    if (registerData.password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await register({
+        nombreCompleto: registerData.nombreCompleto,
+        email: registerData.email,
+        password: registerData.password,
+        telefono: registerData.telefono,
+      });
+      router.push(getRutaPorRol(res.rol));
+    } catch (err: any) {
+      setError(err?.response?.data?.error || "Error al crear la cuenta");
+    } finally {
+      setLoading(false);
+    }
+  };
+ 
+  const handleGoogle = async () => {
+    console.log("Google click");
+    setError("");
+    setLoading(true);
+    try {
+      const res = await loginConGoogle();
+      router.push(getRutaPorRol(res.rol));
+    } catch (err){
+      console.error("Error Google:", err); // ← y esto
+      setError("Error al iniciar sesión con Google");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
 
@@ -62,59 +138,45 @@ const handleLogin = () => {
       Inicia sesión para continuar explorando Arequipa.
     </p>
   </div>
+=======
+        {error && !isRegister && (
+          <p className="mb-4 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-2.5">
+            {error}
+          </p>
+        )}
 
-  <div className="space-y-4">
-
-    {/* Email */}
-    <div>
-      <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1.5 block">
-        Correo electrónico
-      </span>
-      <input
-        type="email"
-        placeholder="tu@correo.com"
-        value={email}
-        onChange={(e) => { setEmail(e.target.value); setError(""); }}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-amber-400/50 transition-all duration-200"
-      />
-    </div>
-
-    {/* Contraseña */}
-    <div>
-      <div className="flex justify-between items-center mb-1.5">
-        <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">
-          Contraseña
-        </span>
-        <button className="text-xs text-amber-400/80 hover:text-amber-400 transition-colors">
-          ¿Olvidaste tu contraseña?
-        </button>
-      </div>
-      <input
-        type="password"
-        placeholder="••••••••"
-        value={password}
-        onChange={(e) => { setPassword(e.target.value); setError(""); }}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-amber-400/50 transition-all duration-200"
-      />
-    </div>
-
-    {/* Error */}
-    {error && (
-      <p className="text-red-400 text-xs text-center -mt-1">{error}</p>
-    )}
-
-    {/* Botón */}
-    <button
-      onClick={handleLogin}
-      className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20 hover:scale-[1.01] active:scale-[0.99]"
-    >
-      Ingresar
-    </button>
-
-  </div>
+        <div className="space-y-4">
+          <Field label="Correo electrónico" type="email" placeholder="tu@correo.com" 
+            value={loginData.email}
+            onChange={(v) => setLoginData({ ...loginData, email: v })}
+            autoComplete="email"
+            error={loginErrors.email}/>
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-[11px] font-semibold text-white/40 uppercase tracking-widest">Contraseña</span>
+              <button className="text-xs text-amber-400/80 hover:text-amber-400 transition-colors">
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+            <input
+              type="password"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              value={loginData.password}
+              onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-amber-400/50 transition-all duration-200"
+            />
+          </div>
+          <button
+            onClick={handleLogin} disabled={loading}
+            className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20 hover:scale-[1.01] active:scale-[0.99]"
+          >
+            {loading ? "Ingresando..." : "Ingresar"}
+          </button>
+        </div>
 
         <Divider text="O continúa con" />
-        <GoogleBtn />
+        <GoogleBtn onClick={handleGoogle} loading={loading}/>
 
         {/* Mobile toggle */}
         <p className="mt-6 text-center text-white/40 text-sm lg:hidden">
@@ -140,41 +202,52 @@ const handleLogin = () => {
       >
         <Logo />
         <div className="mb-2 mt-2">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
-            Crea tu<br />
-            <span className="text-amber-400">cuenta.</span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
+            Crea tu 
+            <span className="text-amber-400"> cuenta.</span>
           </h1>
           <p className="mt-2 text-white/50 text-sm">Completa el formulario para comenzar tu aventura.</p>
         </div>
 
+        {error && isRegister && (
+          <p className="mb-3 text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-2.5">
+            {error}
+          </p>
+        )}
+
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Nombre" type="text" placeholder="Juan Pérez" />
-            <Field label="Correo" type="email" placeholder="tu@correo.com" />
+            <Field label="Nombre" type="text" placeholder="Juan Pérez"
+              value={registerData.nombreCompleto}
+              onChange={(v) => setRegisterData({ ...registerData, nombreCompleto: v })}
+              autoComplete="name"
+              error={registerErrors.nombreCompleto} />
+            <Field label="Teléfono" type="tel" placeholder="999888777"
+              value={registerData.telefono}
+              onChange={(v) => setRegisterData({ ...registerData, telefono: v })} 
+              autoComplete="tel"
+              error={registerErrors.telefono}/>
           </div>
-          <Field label="Contraseña" type="password" placeholder="Mínimo 8 caracteres" />
-          <Field label="Confirmar contraseña" type="password" placeholder="Repite tu contraseña" />
-
-          <label className="flex items-start gap-3 cursor-pointer group pt-0.5">
-            <div className="mt-0.5 w-4 h-4 rounded border border-white/20 bg-white/5 flex-shrink-0 group-hover:border-amber-400/50 transition-colors" />
-            <span className="text-white/40 text-xs leading-relaxed">
-              Acepto los{" "}
-              <Link href="/terms" className="text-amber-400/80 hover:text-amber-400">Términos</Link>
-              {" "}y la{" "}
-              <Link href="/privacy" className="text-amber-400/80 hover:text-amber-400">Política de privacidad</Link>
-            </span>
-          </label>
-
-          <button
-            onClick={() => router.push("/")}
-            className="w-full bg-amber-400 hover:bg-amber-300 text-black font-bold py-3 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20 hover:scale-[1.01] active:scale-[0.99]"
-          >
-            Crear cuenta
+          <Field label="Correo" type="email" placeholder="tu@correo.com"
+            value={registerData.email}
+            onChange={(v) => setRegisterData({ ...registerData, email: v })} 
+            autoComplete="email"
+            error={registerErrors.email}/>
+          <Field label="Contraseña" type="password" placeholder="Mínimo 8 caracteres"
+            value={registerData.password}
+            onChange={(v) => setRegisterData({ ...registerData, password: v })} />
+          <Field label="Confirmar contraseña" type="password" placeholder="Repite tu contraseña"
+            value={registerData.confirmar}
+            onChange={(v) => setRegisterData({ ...registerData, confirmar: v })} />
+ 
+          <button onClick={handleRegister} disabled={loading}
+            className="w-full bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-black font-bold py-3 rounded-xl transition-all duration-200 text-sm tracking-wide shadow-lg shadow-amber-400/20">
+            {loading ? "Creando cuenta..." : "Crear cuenta"}
           </button>
         </div>
 
         <Divider text="O regístrate con" />
-        <GoogleBtn />
+        <GoogleBtn onClick={handleGoogle} loading={loading}/>
 
         {/* Mobile toggle */}
         <p className="mt-4 text-center text-white/40 text-sm lg:hidden">
@@ -288,7 +361,15 @@ function Logo() {
   );
 }
 
-function Field({ label, type, placeholder }: { label: string; type: string; placeholder: string }) {
+function Field({ label, type, placeholder, value, onChange, autoComplete, error }: {
+  label: string;
+  type: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+  error?: string;
+}) {
   return (
     <div>
       <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1.5">
@@ -297,12 +378,21 @@ function Field({ label, type, placeholder }: { label: string; type: string; plac
       <input
         type={type}
         placeholder={placeholder}
-        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none focus:border-amber-400/50 transition-all duration-200"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}  // ← habilita autocompletado del browser
+        className={`w-full bg-white/5 border rounded-xl px-4 py-2.5 text-white placeholder-white/20 text-sm focus:outline-none transition-all duration-200
+          ${error
+            ? "border-red-400/60 focus:border-red-400"
+            : "border-white/10 focus:border-amber-400/50"
+          }`}
       />
+      {error && (
+        <p className="mt-1 text-xs text-red-400">{error}</p>
+      )}
     </div>
   );
 }
-
 function Divider({ text }: { text: string }) {
   return (
     <div className="my-3 flex items-center gap-4">
@@ -313,9 +403,10 @@ function Divider({ text }: { text: string }) {
   );
 }
 
-function GoogleBtn() {
+function GoogleBtn({ onClick, loading }: { onClick: () => void; loading: boolean }) {
   return (
-    <button className="w-full flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl py-2.5 transition-all duration-200 group">
+    <button onClick={onClick} disabled={loading}
+    className="w-full flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl py-2.5 transition-all duration-200 group">
       <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
