@@ -1,7 +1,6 @@
 // app/destinos/page.tsx (o pages/destinos.tsx)
 "use client";
 
-
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Clock, MapPin, Star, Filter, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";

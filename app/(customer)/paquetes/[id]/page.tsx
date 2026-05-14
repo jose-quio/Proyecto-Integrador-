@@ -1,7 +1,7 @@
 // app/paquetes/[id]/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -61,6 +61,47 @@ function SubNavbar() {
     { id: "preguntas", label: "Preguntas" },
     { id: "mapa", label: "Mapa" },
   ];
+  const [activeId, setActiveId] = useState<string>("resumen");
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Configurar IntersectionObserver para detectar qué sección es visible
+  useEffect(() => {
+    const handleIntersect: IntersectionObserverCallback = (entries) => {
+      // Buscamos la entrada con mayor intersección (la que está más visible)
+      const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+      if (visibleEntries.length > 0) {
+        // Ordenamos por ratio de intersección y tomamos la primera
+        visibleEntries.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        setActiveId(visibleEntries[0].target.id);
+      }
+    };
+
+    observerRef.current = new IntersectionObserver(handleIntersect, {
+      root: null,
+      rootMargin: "0px 0px -80% 0px", // Ajusta para que active cuando la sección esté cerca del centro
+      threshold: 0.1,
+    });
+
+    // Observar cada sección
+    secciones.forEach((sec) => {
+      const el = document.getElementById(sec.id);
+      if (el) observerRef.current?.observe(el);
+    });
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [secciones]);
+
+  // Manejar clic en un enlace (scroll suave + actualizar estado inmediato)
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const elemento = document.getElementById(id);
+    if (elemento) {
+      elemento.scrollIntoView({ behavior: "smooth", block: "start" });
+      setActiveId(id);
+    }
+  };
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -71,20 +112,26 @@ function SubNavbar() {
   };
 
   return (
-    <nav className="sticky top-20 z-40 bg-[#2a1810] border-b border-[#d4663a]/20 shadow-lg">
+    <nav className="hidden md:block bg-white/80 backdrop-blur-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4">
-        <ul className="flex overflow-x-auto gap-2 py-2">
-          {secciones.map((sec) => (
-            <li key={sec.id} className="flex-shrink-0">
-              <a
-                href={`#${sec.id}`}
-                onClick={(e) => handleScroll(e, sec.id)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-[#f4e8d9] hover:bg-[#d4663a] hover:text-white transition-colors whitespace-nowrap"
-              >
-                {sec.label}
-              </a>
-            </li>
-          ))}
+        <ul className="flex items-center gap-1 py-3 overflow-x-auto md:overflow-visible">
+          {secciones.map((sec) => {
+            const isActive = activeId === sec.id;
+            return (
+              <li key={sec.id} className="flex-shrink-0">
+                <a
+                  href={`#${sec.id}`}
+                  onClick={(e) => handleClick(e, sec.id)}
+                  className={`relative inline-block px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                    isActive ? "text-[#d4663a]" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  {sec.label}
+                  
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </nav>
@@ -211,7 +258,7 @@ export default function PaqueteDetallePage() {
           <div className="mt-10 space-y-16">
             {/* Resumen */}
             {paquete.resumenMd && (
-              <section id="resumen">
+              <section id="resumen" className="scroll-mt-24">
                 <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
                   Resumen
                 </h2>
@@ -223,7 +270,7 @@ export default function PaqueteDetallePage() {
 
             {/* Itinerario */}
             {paquete.itinerario && paquete.itinerario.length > 0 && (
-              <section id="itinerario">
+              <section id="itinerario" className="scroll-mt-24">
                 <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
                   Itinerario
                 </h2>
@@ -233,7 +280,7 @@ export default function PaqueteDetallePage() {
 
             {/* Incluye */}
             {paquete.incluyeMd && (
-              <section id="incluye">
+              <section id="incluye" className="scroll-mt-24">
                 <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
                   Incluye
                 </h2>
@@ -245,7 +292,7 @@ export default function PaqueteDetallePage() {
 
             {/* No Incluye */}
             {paquete.noIncluyeMd && (
-              <section id="no-incluye">
+              <section id="no-incluye" className="scroll-mt-24">
                 <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
                   No Incluye
                 </h2>
@@ -257,7 +304,7 @@ export default function PaqueteDetallePage() {
 
             {/* Recomendaciones */}
             {paquete.recomendacionesMd && (
-              <section id="recomendaciones">
+              <section id="recomendaciones" className="scroll-mt-24">
                 <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
                   Recomendaciones
                 </h2>
@@ -269,7 +316,7 @@ export default function PaqueteDetallePage() {
 
             {/* Preguntas */}
             {paquete.preguntasMd && (
-              <section id="preguntas">
+              <section id="preguntas" className="scroll-mt-24">
                 <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
                   Preguntas Frecuentes
                 </h2>
@@ -281,7 +328,7 @@ export default function PaqueteDetallePage() {
 
             {/* Mapa */}
             {paquete.mapaUrl && (
-              <section id="mapa">
+              <section id="mapa" className="scroll-mt-24">
                 <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
                   Mapa del Recorrido
                 </h2>
