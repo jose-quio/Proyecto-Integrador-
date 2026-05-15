@@ -6,6 +6,8 @@ import {
   TrendingUp, Clock, AlertCircle, Loader2,
 } from "lucide-react";
 import { getStats, getActividadReciente, StatsDto, ActividadRecienteDto } from "@/lib/admin";
+import BackupButton from "@/components/layout/BackupButton";
+
 
 // ── Badge de estado ───────────────────────────────────────────
 function EstadoBadge({ estado }: { estado: string }) {
@@ -85,9 +87,12 @@ export default function AdminDashboard() {
     <div className="space-y-6">
 
       {/* Título */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Resumen general del sistema</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Resumen general del sistema</p>
+        </div>
+        <BackupButton />
       </div>
 
       {/* Tarjetas principales */}
