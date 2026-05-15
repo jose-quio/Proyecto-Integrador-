@@ -1,40 +1,114 @@
-// app/dashboard/page.tsx (o pages/dashboard.tsx según tu enrutador)
+// app/dashboard/page.tsx
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Calendar,
   MapPin,
-  Car,
   Clock,
   Mail,
   Phone,
   User,
   Users,
+  Car,
+  CreditCard,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { getMisReservas, cancelarReserva, ReservaResponse } from "@/lib/reservas";
+import { ModalPago } from "@/components/layout/ModalPago";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<{ nombreCompleto: string; email: string } | null>(null);
+  const [usuario, setUsuario] = useState<{
+    nombreCompleto: string;
+    email: string;
+    telefono?: string;
+    dniPasaporte?: string;
+  } | null>(null);
 
+  const [reservas, setReservas] = useState<ReservaResponse[]>([]);
+  const [cargandoReservas, setCargandoReservas] = useState(true);
+  const [errorReservas, setErrorReservas] = useState("");
+
+  // Modal de pago
+  const [mostrarPago, setMostrarPago] = useState(false);
+  const [reservaAPagar, setReservaAPagar] = useState<ReservaResponse | null>(null);
+
+  // Detalle expandido
+  const [reservaExpandida, setReservaExpandida] = useState<string | null>(null);
+
+  // Cargar usuario y reservas
   useEffect(() => {
-    const storedUser = localStorage.getItem("usuario");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      router.replace("/"); // Redirige al inicio si no está autenticado
+    const stored = localStorage.getItem("usuario");
+    if (!stored) {
+      router.replace("/");
+      return;
     }
+    setUsuario(JSON.parse(stored));
+
+    getMisReservas()
+      .then(setReservas)
+      .catch((err) => {
+        console.error(err);
+        setErrorReservas("No se pudieron cargar tus reservas.");
+      })
+      .finally(() => setCargandoReservas(false));
   }, [router]);
 
-  // Mientras se carga la sesión, mostramos un spinner (opcional)
-  if (!user) {
+  const handleCancelar = async (id: string) => {
+    try {
+      const actualizada = await cancelarReserva(id);
+      setReservas((prev) =>
+        prev.map((r) => (r.id === id ? actualizada : r))
+      );
+    } catch {
+      alert("Error al cancelar la reserva.");
+    }
+  };
+
+  const handlePagoExitoso = (referencia: string) => {
+    setMostrarPago(false);
+    setReservaAPagar(null);
+    // Actualizar estado de la reserva a CONFIRMADA (simulado)
+    setReservas((prev) =>
+      prev.map((r) =>
+        r.id === reservaAPagar?.id ? { ...r, estado: "CONFIRMADA" } : r
+      )
+    );
+  };
+
+  const abrirPago = (reserva: ReservaResponse) => {
+    setReservaAPagar(reserva);
+    setMostrarPago(true);
+  };
+
+  const getEstadoBadge = (estado: string) => {
+    switch (estado) {
+      case "PENDIENTE_PAGO":
+        return <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">Pendiente de pago</span>;
+      case "CONFIRMADA":
+        return <span className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full">Confirmada</span>;
+      case "CANCELADA":
+        return <span className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-full">Cancelada</span>;
+      case "COMPLETADA":
+        return <span className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">Completada</span>;
+      default:
+        return null;
+    }
+  };
+
+  if (!usuario) {
     return (
       <div className="min-h-screen bg-[#f5eee6] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d4663a] mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#d4663a] mx-auto mb-4" />
+          <p className="text-gray-600">Cargando sesión...</p>
         </div>
       </div>
     );
@@ -43,12 +117,10 @@ export default function DashboardPage() {
   return (
     <div className="bg-[#f5eee6] min-h-screen">
       <div className="px-8 py-10 max-w-7xl mx-auto w-full">
-        {/* TITULO CON GRADIENTE */}
         <h1 className="text-4xl font-bold bg-gradient-to-r from-[#2a1810] to-[#d4663a] bg-clip-text text-transparent mb-2">
           Mi Dashboard
         </h1>
-
-        <p className="text-gray-600 mb-8">Bienvenido, {user.nombreCompleto}</p>
+        <p className="text-gray-600 mb-8">Bienvenido, {usuario.nombreCompleto}</p>
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* PERFIL */}
@@ -58,22 +130,24 @@ export default function DashboardPage() {
             className="bg-white rounded-2xl shadow p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
           >
             <div className="flex flex-col items-center">
-              {/* AVATAR */}
               <div className="w-24 h-24 bg-[#b86a3c] rounded-full flex items-center justify-center shadow-lg">
                 <User size={40} className="text-white" />
               </div>
-              <h2 className="mt-4 text-xl font-bold">{user.nombreCompleto}</h2>
-              <p className="text-gray-500">{user.email}</p>
+              <h2 className="mt-4 text-xl font-bold">{usuario.nombreCompleto}</h2>
+              <p className="text-gray-500">{usuario.email}</p>
             </div>
 
             <hr className="my-6" />
 
             <div className="space-y-4 text-sm text-gray-600">
               <div className="flex items-center gap-2">
-                <Mail size={16} /> {user.email}
+                <Mail size={16} /> {usuario.email}
               </div>
               <div className="flex items-center gap-2">
-                <Phone size={16} /> +51 954 XXX XXX
+                <Phone size={16} /> {usuario.telefono || "—"}
+              </div>
+              <div className="flex items-center gap-2">
+                <User size={16} /> DNI/Pasaporte: {usuario.dniPasaporte || "—"}
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={16} /> Arequipa, Perú
@@ -81,110 +155,182 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* RESERVAS (placeholder – luego conecta tu API) */}
+          {/* RESERVAS */}
           <div className="md:col-span-2 space-y-6">
             <h2 className="text-2xl font-bold text-[#2a1810]">Mis Reservas</h2>
 
-            {/* RESERVA 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-6 shadow border hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-sm text-gray-500">#B001</span>
-                  <span className="ml-2 px-3 py-1 text-xs bg-green-100 text-green-700 rounded-full">
-                    Confirmado
-                  </span>
-                  <h3 className="text-xl font-bold mt-2">Cañón del Colca</h3>
-                  <p className="text-gray-500">Explorador Completo</p>
-                </div>
-                <span className="text-xl font-bold text-[#d4663a]">S/ 950</span>
+            {cargandoReservas && (
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-[#d4663a]" />
+                <p className="text-gray-500">Cargando reservas...</p>
               </div>
-              <div className="flex flex-wrap gap-6 text-sm text-gray-600 mt-4">
-                <span className="flex items-center gap-1">
-                  <Calendar size={16} /> 2026-05-15
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users size={16} /> 2 pax
-                </span>
-                <span className="flex items-center gap-1">
-                  <Car size={16} /> Camioneta SUV
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock size={16} /> Confirmado
-                </span>
-              </div>
-              <button className="mt-4 bg-[#d4663a] text-white px-5 py-2 rounded-lg hover:bg-[#b8542d] hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg">
-                Ver Detalles
-              </button>
-            </motion.div>
+            )}
 
-            {/* RESERVA 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-2xl p-6 shadow border hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-sm text-gray-500">#B002</span>
-                  <span className="ml-2 px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">
-                    Pendiente
+            {errorReservas && (
+              <div className="bg-red-50 text-red-700 p-4 rounded-xl flex items-center gap-2">
+                <AlertCircle size={18} /> {errorReservas}
+              </div>
+            )}
+
+            {!cargandoReservas && reservas.length === 0 && (
+              <div className="bg-white rounded-2xl p-8 text-center shadow">
+                <p className="text-gray-500 mb-4">No tienes reservas aún.</p>
+                <button
+                  onClick={() => router.push("/reservar")}
+                  className="px-6 py-3 bg-[#d4663a] text-white rounded-xl hover:bg-[#b8542d] transition-colors"
+                >
+                  Reservar ahora
+                </button>
+              </div>
+            )}
+
+            {reservas.map((reserva) => (
+              <motion.div
+                key={reserva.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl p-6 shadow border hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
+                <div className="flex justify-between items-start flex-wrap gap-4">
+                  <div>
+                    <span className="text-sm text-gray-500">#{reserva.id.slice(0, 8)}</span>
+                    <span className="ml-2">{getEstadoBadge(reserva.estado)}</span>
+                    <h3 className="text-xl font-bold mt-2">{reserva.paqueteNombre}</h3>
+                    {reserva.fotoPrincipal && (
+                      <img
+                        src={reserva.fotoPrincipal}
+                        alt={reserva.paqueteNombre}
+                        className="w-24 h-16 object-cover rounded-lg mt-2"
+                      />
+                    )}
+                  </div>
+                  <span className="text-xl font-bold text-[#d4663a]">
+                    S/ {reserva.precioTotal?.toFixed(2)}
                   </span>
-                  <h3 className="text-xl font-bold mt-2">Volcán Misti</h3>
-                  <p className="text-gray-500">Aventura Full Day</p>
                 </div>
-                <span className="text-xl font-bold text-[#d4663a]">S/ 450</span>
-              </div>
-              <div className="flex flex-wrap gap-6 text-sm text-gray-600 mt-4">
-                <span className="flex items-center gap-1">
-                  <Calendar size={16} /> 2026-06-10
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users size={16} /> 1 pax
-                </span>
-                <span className="flex items-center gap-1">
-                  <Car size={16} /> Transporte turístico
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock size={16} /> Pendiente
-                </span>
-              </div>
-              <button className="mt-4 bg-[#d4663a] text-white px-5 py-2 rounded-lg hover:bg-[#b8542d] hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg">
-                Ver Detalles
-              </button>
-            </motion.div>
+
+                <div className="flex flex-wrap gap-6 text-sm text-gray-600 mt-4">
+                  <span className="flex items-center gap-1">
+                    <Calendar size={16} /> {new Date(reserva.fechaSalida).toLocaleDateString()}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users size={16} /> {reserva.numPersonas} pax
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={16} /> {reserva.estado}
+                  </span>
+                </div>
+
+                {/* Botones de acción según estado */}
+                <div className="mt-4 flex gap-3 flex-wrap">
+                  {reserva.estado === "PENDIENTE_PAGO" && (
+                    <>
+                      <button
+                        onClick={() => abrirPago(reserva)}
+                        className="bg-[#d4663a] text-white px-5 py-2 rounded-lg hover:bg-[#b8542d] transition-colors flex items-center gap-2"
+                      >
+                        <CreditCard size={16} /> Confirmar pago
+                      </button>
+                      <button
+                        onClick={() => handleCancelar(reserva.id)}
+                        className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <XCircle size={16} /> Cancelar
+                      </button>
+                    </>
+                  )}
+
+                  {reserva.estado === "CONFIRMADA" && (
+                    <button
+                      onClick={() => handleCancelar(reserva.id)}
+                      className="text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <XCircle size={16} /> Cancelar reserva
+                    </button>
+                  )}
+
+                  {/* Ver detalle */}
+                  <button
+                    onClick={() =>
+                      setReservaExpandida(reservaExpandida === reserva.id ? null : reserva.id)
+                    }
+                    className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg flex items-center gap-1 transition-colors"
+                  >
+                    {reservaExpandida === reserva.id ? (
+                      <><ChevronUp size={16} /> Ocultar detalles</>
+                    ) : (
+                      <><ChevronDown size={16} /> Ver detalles</>
+                    )}
+                  </button>
+                </div>
+
+                {/* Detalle expandido */}
+                <AnimatePresence>
+                  {reservaExpandida === reserva.id && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 space-y-2">
+                        <p><span className="font-medium">Reserva ID:</span> {reserva.id}</p>
+                        <p><span className="font-medium">Paquete:</span> {reserva.paqueteNombre}</p>
+                        <p><span className="font-medium">Fecha de salida:</span> {new Date(reserva.fechaSalida).toLocaleDateString()}</p>
+                        <p><span className="font-medium">Personas:</span> {reserva.numPersonas}</p>
+                        <p><span className="font-medium">Precio total:</span> S/ {reserva.precioTotal?.toFixed(2)}</p>
+                        {reserva.acompanantes.length > 0 && (
+                          <div>
+                            <p className="font-medium mb-1">Acompañantes:</p>
+                            <ul className="list-disc pl-5">
+                              {reserva.acompanantes.map((a, i) => (
+                                <li key={i}>{a.nombreCompleto} – {a.dniPasaporte}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <p><span className="font-medium">Creada el:</span> {new Date(reserva.createdAt).toLocaleString()}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
           </div>
         </div>
 
         {/* CARDS INFERIORES */}
         <div className="grid md:grid-cols-3 gap-6 mt-10">
           {[
-            { icon: Calendar, title: "Nueva Reserva", desc: "Planifica tu próxima aventura" },
-            { icon: MapPin, title: "Ver Paquetes", desc: "Explora nuestras ofertas" },
-            { icon: Car, title: "Destinos", desc: "Descubre nuevos lugares" },
+            { icon: Calendar, title: "Nueva Reserva", desc: "Planifica tu próxima aventura", link: "/reservar" },
+            { icon: MapPin, title: "Ver Paquetes", desc: "Explora nuestras ofertas", link: "/destinations" },
+            { icon: Car, title: "Destinos", desc: "Descubre nuevos lugares", link: "/destinos" },
           ].map((item, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + i * 0.2 }}
+              onClick={() => router.push(item.link)}
               className="group bg-white p-6 rounded-2xl shadow cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
-              <item.icon
-                size={28}
-                className="text-[#d4663a] mb-3 group-hover:scale-110 transition"
-              />
+              <item.icon size={28} className="text-[#d4663a] mb-3 group-hover:scale-110 transition" />
               <h3 className="font-bold">{item.title}</h3>
               <p className="text-gray-500 text-sm">{item.desc}</p>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* Modal de pago */}
+      {mostrarPago && reservaAPagar && (
+        <ModalPago
+          reservaId={reservaAPagar.id}
+          monto={reservaAPagar.precioTotal}
+          onExito={handlePagoExitoso}
+          onCerrar={() => setMostrarPago(false)}
+        />
+      )}
     </div>
   );
 }

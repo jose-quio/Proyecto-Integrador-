@@ -4,6 +4,8 @@ export interface AuthResponse {
   email: string;
   nombreCompleto: string;
   rol: "CLIENTE" | "ADMIN";
+  telefono?: string;      
+  dniPasaporte?: string;
 }
  
 export interface LoginRequest {

@@ -370,8 +370,8 @@ export default function ReservarPage() {
 
       {/* Indicador de pasos */}
       <div className="max-w-lg mx-auto mb-8">
-        <div className="flex items-center justify-between relative">
-          <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-200 -z-0">
+        <div className="relative flex items-center justify-between">
+          <div className="absolute top-4 left-8 right-8 h-0.5 bg-gray-200 z-0">
             <div className="h-full bg-[#c7663c] transition-all duration-500"
               style={{ width: `${((paso - 1) / 3) * 100}%` }} />
           </div>

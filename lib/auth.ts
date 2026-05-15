@@ -11,6 +11,8 @@ export function guardarSesion(data: AuthResponse) {
     email: data.email,
     nombreCompleto: data.nombreCompleto,
     rol: data.rol,
+    telefono: data.telefono,
+    dniPasaporte: data.dniPasaporte,
   }));
   window.dispatchEvent(new Event("authChanged"));
 }
