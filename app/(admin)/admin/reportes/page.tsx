@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,8 +12,9 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, DollarSign, Users,
-  CalendarCheck, MapPin, Download, AlertTriangle,
+  CalendarCheck, MapPin, Download, AlertTriangle, Loader2,
 } from "lucide-react";
+import { getReportes, ReporteCompleto } from "@/lib/reportes";
 
 // ── Paleta cálida del proyecto ─────────────────────────────
 const C = {
@@ -31,50 +32,13 @@ const C = {
   textoMuted: "#8c7b6e",
 };
 
-// ── Mock data ──────────────────────────────────────────────
-const ingresosMensuales = [
-  { mes: "Oct", ingresos: 6200, reservas: 28, meta: 8000 },
-  { mes: "Nov", ingresos: 7800, reservas: 35, meta: 8000 },
-  { mes: "Dic", ingresos: 11200, reservas: 52, meta: 10000 },
-  { mes: "Ene", ingresos: 8400, reservas: 38, meta: 9000 },
-  { mes: "Feb", ingresos: 9600, reservas: 44, meta: 9000 },
-  { mes: "Mar", ingresos: 12450, reservas: 51, meta: 10000 },
-  { mes: "Abr", ingresos: 10800, reservas: 47, meta: 11000 },
-];
-
-const ocupacionPaquetes = [
-  { nombre: "Arequipa + Colca", reservas: 42, cupos: 50, ingresos: 11760 },
-  { nombre: "Colca + Campiña", reservas: 28, cupos: 40, ingresos: 5040 },
-  { nombre: "Arequipa + Cotahuasi", reservas: 15, cupos: 24, ingresos: 6300 },
-  { nombre: "City Tour Arequipa", reservas: 30, cupos: 60, ingresos: 1350 },
-  { nombre: "Colca Express", reservas: 18, cupos: 20, ingresos: 3240 },
-  { nombre: "Toro Muerto", reservas: 8, cupos: 20, ingresos: 1680 },
-];
-
-const estadosReserva = [
-  { name: "Confirmadas", value: 87, color: C.verde },
-  { name: "Pendiente pago", value: 24, color: C.ambar },
-  { name: "Canceladas", value: 17, color: C.rojo },
-];
-
-const procedenciaClientes = [
-  { pais: "Perú", clientes: 42, porcentaje: 33 },
-  { pais: "EE.UU.", clientes: 28, porcentaje: 22 },
-  { pais: "España", clientes: 19, porcentaje: 15 },
-  { pais: "Chile", clientes: 15, porcentaje: 12 },
-  { pais: "Argentina", clientes: 12, porcentaje: 9 },
-  { pais: "Otros", clientes: 12, porcentaje: 9 },
-];
-
-const reservasSemana = [
-  { dia: "Lun", nuevas: 4, canceladas: 1 },
-  { dia: "Mar", nuevas: 7, canceladas: 0 },
-  { dia: "Mié", nuevas: 3, canceladas: 2 },
-  { dia: "Jue", nuevas: 9, canceladas: 1 },
-  { dia: "Vie", nuevas: 12, canceladas: 0 },
-  { dia: "Sáb", nuevas: 8, canceladas: 1 },
-  { dia: "Dom", nuevas: 5, canceladas: 0 },
-];
+// Colores para el gráfico de estados
+const COLOR_ESTADO: Record<string, string> = {
+  PENDIENTE_PAGO: C.ambar,
+  CONFIRMADA: C.verde,
+  CANCELADA: C.rojo,
+  COMPLETADA: "#2b6cb0",   // azul
+};
 
 // ── Helpers ────────────────────────────────────────────────
 function pct(a: number, b: number) { return Math.round((a / b) * 100); }
@@ -117,7 +81,6 @@ function KpiCard({
   );
 }
 
-// ── Tooltip personalizado ──────────────────────────────────
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
@@ -133,37 +96,32 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-// ── Alerta de decisión ─────────────────────────────────────
-function Alerta({ tipo, mensaje }: { tipo: "warn" | "ok"; mensaje: string }) {
-  return (
-    <div
-      className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-xs"
-      style={{
-        background: tipo === "warn" ? C.ambarLight : C.verdeLight,
-        color: tipo === "warn" ? "#92400e" : C.verde,
-        border: `0.5px solid ${tipo === "warn" ? "#fcd9a0" : "#b8dfc5"}`,
-      }}
-    >
-      <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
-      {mensaje}
-    </div>
-  );
-}
-
-// ── Página principal ───────────────────────────────────────
 export default function ReportesPage() {
-  const [periodo, setPeriodo] = useState<"7d" | "30d" | "6m">("6m");
+  const [data, setData] = useState<ReporteCompleto | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const totalIngresos = ingresosMensuales.reduce((a, m) => a + m.ingresos, 0);
-  const totalReservas = estadosReserva.reduce((a, e) => a + e.value, 0);
-  const ingresoMes = ingresosMensuales.at(-1)!.ingresos;
-  const ingresoAnterior = ingresosMensuales.at(-2)!.ingresos;
-  const crecimiento = pct(ingresoMes - ingresoAnterior, ingresoAnterior);
+  useEffect(() => {
+    getReportes()
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-[#d4663a]" />
+      </div>
+    );
+  }
+
+  const { resumen, ingresosMensuales, estadosReserva, procedenciaClientes, reservasSemana, rendimientoPaquetes } = data;
+  const totalReservasEstados = estadosReserva.reduce((a, e) => a + e.cantidad, 0);
+  const ingresoMes = ingresosMensuales.length > 0 ? ingresosMensuales[ingresosMensuales.length - 1].ingresos : 0;
 
   return (
     <div className="space-y-6">
-
-      {/* ── Encabezado ── */}
+      {/* Encabezado */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold" style={{ color: C.marron }}>Reportes y análisis</h2>
@@ -177,53 +135,59 @@ export default function ReportesPage() {
         </Button>
       </div>
 
-      {/* ── KPIs ── */}
+      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Ingresos este mes"
-          value={`$${ingresoMes.toLocaleString('es-PE')}`}
-          sub={`Meta: $10,000`}
-          trend={`${crecimiento > 0 ? "+" : ""}${crecimiento}%`}
-          trendUp={crecimiento > 0}
+          value={`$${resumen.ingresosEsteMes.toLocaleString('es-PE')}`}
+          sub="Confirmados y completados"
+          trend={`${resumen.crecimientoIngresos > 0 ? "+" : ""}${resumen.crecimientoIngresos.toFixed(1)}%`}
+          trendUp={resumen.crecimientoIngresos > 0}
           icon={<DollarSign size={18} />}
           color={C.naranja}
         />
         <KpiCard
           title="Reservas totales"
-          value={String(totalReservas)}
-          sub={`${estadosReserva[0].value} confirmadas`}
-          trend="+6%"
-          trendUp
+          value={String(resumen.totalReservas)}
+          sub={`${resumen.confirmadas} confirmadas`}
+          trend=""
           icon={<CalendarCheck size={18} />}
           color={C.verde}
         />
         <KpiCard
-          title="Ocupación promedio"
-          value="68%"
-          sub="Sobre todos los paquetes"
-          trend="-2%"
-          trendUp={false}
+          title="Tasa conversión"
+          value={`${resumen.totalReservas > 0 ? pct(resumen.confirmadas, resumen.totalReservas) : 0}%`}
+          sub="Confirmadas / total"
+          trend=""
           icon={<MapPin size={18} />}
           color={C.ambar}
         />
         <KpiCard
           title="Nuevos clientes"
-          value="23"
+          value={String(resumen.nuevosClientesMes)}
           sub="Este mes"
-          trend="+12%"
-          trendUp
+          trend=""
           icon={<Users size={18} />}
           color="#7b5ea7"
         />
       </div>
 
-      {/* ── Alertas de decisión ── */}
-      <div className="grid sm:grid-cols-2 gap-3">
-        <Alerta tipo="warn" mensaje="Colca Express tiene 90% de ocupación — considera abrir más cupos o crear un nuevo paquete similar." />
-        <Alerta tipo="warn" mensaje="Toro Muerto solo tiene 40% de ocupación. Evalúa reducir precio o pausar el paquete." />
-      </div>
+      {/* Alertas */}
+      {rendimientoPaquetes.length > 0 && (
+        <div className="grid sm:grid-cols-2 gap-3">
+          {rendimientoPaquetes.filter(p => p.reservas === 0).length > 0 && (
+            <div
+              className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-xs"
+              style={{ background: C.ambarLight, color: "#92400e", border: "0.5px solid #fcd9a0" }}
+            >
+              <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" />
+              Hay paquetes sin reservas. Considera revisar su visibilidad o precio.
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* ── Tabs de reportes ── */}
+      {/* Tabs de reportes */}
       <Tabs defaultValue="ingresos">
         <TabsList className="border border-[#e8d8cc] bg-[#fdf4ef]">
           <TabsTrigger value="ingresos">Ingresos</TabsTrigger>
@@ -232,11 +196,11 @@ export default function ReportesPage() {
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
         </TabsList>
 
-        {/* ─── TAB INGRESOS ─────────────────────── */}
+        {/* TAB INGRESOS */}
         <TabsContent value="ingresos" className="space-y-4 mt-5">
           <Card className="border-[#e8d8cc]">
             <CardHeader>
-              <CardTitle className="text-base" style={{ color: C.marron }}>Ingresos vs Meta mensual</CardTitle>
+              <CardTitle className="text-base" style={{ color: C.marron }}>Ingresos mensuales (confirmados)</CardTitle>
               <CardDescription style={{ color: C.textoMuted }}>Últimos 7 meses en USD</CardDescription>
             </CardHeader>
             <CardContent>
@@ -252,23 +216,16 @@ export default function ReportesPage() {
                   <XAxis dataKey="mes" tick={{ fontSize: 12, fill: C.textoMuted }} />
                   <YAxis tick={{ fontSize: 12, fill: C.textoMuted }} tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
                   <Area
                     type="monotone" dataKey="ingresos" name="Ingresos"
                     stroke={C.naranja} strokeWidth={2}
                     fill="url(#gradIngreso)"
-                  />
-                  <Area
-                    type="monotone" dataKey="meta" name="Meta"
-                    stroke={C.beige} strokeWidth={1.5} strokeDasharray="4 4"
-                    fill="none"
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          {/* Tabla resumen */}
           <Card className="border-[#e8d8cc]">
             <CardHeader>
               <CardTitle className="text-base" style={{ color: C.marron }}>Detalle mensual</CardTitle>
@@ -281,30 +238,17 @@ export default function ReportesPage() {
                     <TableHead>Ingresos</TableHead>
                     <TableHead>Reservas</TableHead>
                     <TableHead>Ticket prom.</TableHead>
-                    <TableHead>vs Meta</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {ingresosMensuales.map((m) => {
-                    const ticket = Math.round(m.ingresos / m.reservas);
-                    const vsMeta = pct(m.ingresos, m.meta);
+                    const ticket = m.reservas > 0 ? Math.round(m.ingresos / m.reservas) : 0;
                     return (
                       <TableRow key={m.mes} className="border-[#f0e8e0] hover:bg-[#fdf0e8]">
                         <TableCell className="font-medium" style={{ color: C.texto }}>{m.mes} 2025</TableCell>
                         <TableCell style={{ color: C.naranja, fontWeight: 600 }}>${m.ingresos.toLocaleString('es-PE')}</TableCell>
                         <TableCell>{m.reservas}</TableCell>
                         <TableCell>${ticket}</TableCell>
-                        <TableCell>
-                          <span
-                            className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                            style={{
-                              background: vsMeta >= 100 ? C.verdeLight : C.ambarLight,
-                              color: vsMeta >= 100 ? C.verde : "#92400e",
-                            }}
-                          >
-                            {vsMeta}%
-                          </span>
-                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -314,33 +258,12 @@ export default function ReportesPage() {
           </Card>
         </TabsContent>
 
-        {/* ─── TAB PAQUETES ─────────────────────── */}
+        {/* TAB PAQUETES */}
         <TabsContent value="paquetes" className="space-y-4 mt-5">
           <Card className="border-[#e8d8cc]">
             <CardHeader>
-              <CardTitle className="text-base" style={{ color: C.marron }}>Ocupación por paquete</CardTitle>
-              <CardDescription style={{ color: C.textoMuted }}>Reservas actuales vs cupos disponibles</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={ocupacionPaquetes} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0e8e0" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: C.textoMuted }} domain={[0, 60]} />
-                  <YAxis
-                    dataKey="nombre" type="category"
-                    tick={{ fontSize: 10, fill: C.textoMuted }} width={130}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="reservas" name="Reservas" fill={C.naranja} radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="cupos" name="Cupos totales" fill={C.beige} radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card className="border-[#e8d8cc]">
-            <CardHeader>
               <CardTitle className="text-base" style={{ color: C.marron }}>Rendimiento por paquete</CardTitle>
+              <CardDescription style={{ color: C.textoMuted }}>Ingresos y reservas por paquete</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -349,65 +272,29 @@ export default function ReportesPage() {
                     <TableHead>Paquete</TableHead>
                     <TableHead>Reservas</TableHead>
                     <TableHead>Ingresos</TableHead>
-                    <TableHead>Ocupación</TableHead>
-                    <TableHead>Estado</TableHead>
+                    <TableHead>Duración</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {[...ocupacionPaquetes]
-                      .sort((a, b) => b.ingresos - a.ingresos)
-                      .map((p) => {
-                      const ocp = pct(p.reservas, p.cupos);
-                      const estado =
-                        ocp >= 90 ? "Lleno" : ocp >= 60 ? "Buena" : ocp >= 30 ? "Regular" : "Baja";
-                      const estadoColor =
-                        ocp >= 90 ? C.rojo : ocp >= 60 ? C.verde : ocp >= 30 ? C.ambar : C.textoMuted;
-                      return (
-                        <TableRow key={p.nombre} className="border-[#f0e8e0] hover:bg-[#fdf0e8]">
-                          <TableCell className="text-sm font-medium" style={{ color: C.texto }}>
-                            {p.nombre}
-                          </TableCell>
-                          <TableCell>{p.reservas}/{p.cupos}</TableCell>
-                          <TableCell style={{ color: C.naranja, fontWeight: 600 }}>
-                            ${p.ingresos.toLocaleString('es-PE')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 h-1.5 rounded-full bg-[#f0e8e0] overflow-hidden">
-                                <div
-                                  className="h-full rounded-full"
-                                  style={{ width: `${ocp}%`, background: estadoColor }}
-                                />
-                              </div>
-                              <span className="text-xs">{ocp}%</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                              style={{
-                                background: estadoColor + "20",
-                                color: estadoColor,
-                                border: `0.5px solid ${estadoColor}40`,
-                              }}
-                            >
-                              {estado}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                  {rendimientoPaquetes.map((p) => (
+                    <TableRow key={p.nombre} className="border-[#f0e8e0] hover:bg-[#fdf0e8]">
+                      <TableCell className="text-sm font-medium" style={{ color: C.texto }}>{p.nombre}</TableCell>
+                      <TableCell>{p.reservas}</TableCell>
+                      <TableCell style={{ color: C.naranja, fontWeight: 600 }}>
+                        ${p.ingresos.toLocaleString('es-PE')}
+                      </TableCell>
+                      <TableCell>{p.duracionDias} días</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ─── TAB RESERVAS ─────────────────────── */}
+        {/* TAB RESERVAS */}
         <TabsContent value="reservas" className="space-y-4 mt-5">
           <div className="grid sm:grid-cols-2 gap-4">
-
-            {/* Donut de estados */}
             <Card className="border-[#e8d8cc]">
               <CardHeader>
                 <CardTitle className="text-base" style={{ color: C.marron }}>Distribución por estado</CardTitle>
@@ -416,19 +303,23 @@ export default function ReportesPage() {
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
-                      data={estadosReserva} cx="50%" cy="50%"
+                      data={estadosReserva}
+                      dataKey="cantidad"
+                      nameKey="estado"
+                      cx="50%" cy="50%"
                       innerRadius={55} outerRadius={85}
-                      paddingAngle={3} dataKey="value"
+                      paddingAngle={3}
                     >
-                      {estadosReserva.map((e, i) => (
-                        <Cell key={i} fill={e.color} />
+                      {estadosReserva.map((entry, index) => (
+                        <Cell key={index} fill={COLOR_ESTADO[entry.estado] || "#ccc"} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(v) => [`${v} reservas`]} />
+                    <Tooltip formatter={(value) => [`${value} reservas`]} />
                     <Legend
-                      formatter={(val, entry: any) =>
-                        `${val}: ${entry.payload.value} (${pct(entry.payload.value, totalReservas)}%)`
-                      }
+                      formatter={(val, entry: any) => {
+                        const e = estadosReserva.find(e => e.estado === val);
+                        return `${val}: ${e?.cantidad || 0} (${pct(e?.cantidad || 0, totalReservasEstados)}%)`;
+                      }}
                       wrapperStyle={{ fontSize: 12 }}
                     />
                   </PieChart>
@@ -436,7 +327,6 @@ export default function ReportesPage() {
               </CardContent>
             </Card>
 
-            {/* Reservas por día de la semana */}
             <Card className="border-[#e8d8cc]">
               <CardHeader>
                 <CardTitle className="text-base" style={{ color: C.marron }}>Reservas esta semana</CardTitle>
@@ -456,92 +346,35 @@ export default function ReportesPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
 
-          {/* Tabla reservas recientes */}
+        {/* TAB CLIENTES */}
+        <TabsContent value="clientes" className="space-y-4 mt-5">
           <Card className="border-[#e8d8cc]">
             <CardHeader>
-              <CardTitle className="text-base" style={{ color: C.marron }}>Resumen de cancelaciones</CardTitle>
-              <CardDescription style={{ color: C.textoMuted }}>
-                17 cancelaciones este mes — tasa del 13%
-              </CardDescription>
+              <CardTitle className="text-base" style={{ color: C.marron }}>Procedencia de clientes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {[
-                  { motivo: "Cambio de planes personal", cantidad: 7, pct: 41 },
-                  { motivo: "Problemas de pago", cantidad: 5, pct: 29 },
-                  { motivo: "Enfermedad o emergencia", cantidad: 3, pct: 18 },
-                  { motivo: "No especificado", cantidad: 2, pct: 12 },
-                ].map((m) => (
-                  <div key={m.motivo} className="flex items-center gap-3">
-                    <span className="text-sm flex-1" style={{ color: C.texto }}>{m.motivo}</span>
-                    <div className="w-24 h-1.5 rounded-full bg-[#f0e8e0] overflow-hidden">
-                      <div className="h-full rounded-full bg-[#c0392b]" style={{ width: `${m.pct}%` }} />
+                {procedenciaClientes.map((p) => (
+                  <div key={p.pais} className="flex items-center gap-3">
+                    <span className="text-sm w-20 flex-shrink-0 font-medium" style={{ color: C.texto }}>
+                      {p.pais}
+                    </span>
+                    <div className="flex-1 h-2 rounded-full bg-[#f0e8e0] overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${p.porcentaje}%`, background: C.naranja }}
+                      />
                     </div>
-                    <span className="text-xs w-8 text-right" style={{ color: C.textoMuted }}>{m.cantidad}</span>
+                    <span className="text-xs w-16 text-right" style={{ color: C.textoMuted }}>
+                      {p.clientes} ({Math.round(p.porcentaje)}%)
+                    </span>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* ─── TAB CLIENTES ─────────────────────── */}
-        <TabsContent value="clientes" className="space-y-4 mt-5">
-          <div className="grid sm:grid-cols-2 gap-4">
-
-            {/* Procedencia */}
-            <Card className="border-[#e8d8cc]">
-              <CardHeader>
-                <CardTitle className="text-base" style={{ color: C.marron }}>Procedencia de clientes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {procedenciaClientes.map((p) => (
-                    <div key={p.pais} className="flex items-center gap-3">
-                      <span className="text-sm w-20 flex-shrink-0 font-medium" style={{ color: C.texto }}>
-                        {p.pais}
-                      </span>
-                      <div className="flex-1 h-2 rounded-full bg-[#f0e8e0] overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${p.porcentaje}%`, background: C.naranja }}
-                        />
-                      </div>
-                      <span className="text-xs w-12 text-right" style={{ color: C.textoMuted }}>
-                        {p.clientes} ({p.porcentaje}%)
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Métricas de clientes */}
-            <div className="space-y-3">
-              {[
-                { label: "Clientes recurrentes", value: "34%", desc: "Reservaron más de 1 vez", color: C.verde },
-                { label: "Ticket promedio", value: "$285", desc: "Por reserva confirmada", color: C.naranja },
-                { label: "Tiempo promedio de anticipación", value: "18 días", desc: "Entre reserva y salida", color: "#7b5ea7" },
-                { label: "Tasa de conversión", value: "72%", desc: "De consulta a reserva confirmada", color: C.ambar },
-              ].map((m) => (
-                <Card key={m.label} className="border-[#e8d8cc]">
-                  <CardContent className="pt-4 pb-3 flex items-center gap-4">
-                    <div
-                      className="text-xl font-bold flex-shrink-0 w-20"
-                      style={{ color: m.color }}
-                    >
-                      {m.value}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: C.marron }}>{m.label}</p>
-                      <p className="text-xs" style={{ color: C.textoMuted }}>{m.desc}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
