@@ -1,5 +1,6 @@
-"use client";
 
+"use client";
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout as authLogout } from "@/lib/auth";

@@ -1,5 +1,6 @@
-"use client";
 
+"use client";
+export const dynamic = "force-dynamic";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
