@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+import { logout as authLogout } from "@/lib/auth";
+import { useState, useEffect } from "react";
 import {
   Home, Map, CalendarCheck, Users,
   Truck, Settings, PanelLeft,
@@ -27,10 +28,50 @@ const navLinks = [
   { href: "/admin/reportes",   icon: <BarChart3 size={18} />,     label: "Reportes"    },
 ];
 
-// ⚠️ Luego conectas con Firebase Auth
-const mockUser = { name: "Jose Admin", email: "admin@aqpgo.com", initials: "JA" };
-
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Almacenamos los datos del usuario autenticado
+  const [user, setUser] = useState<{ nombreCompleto: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const loadUser = () => {
+      const storedUser = localStorage.getItem("usuario");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
+      }
+    };
+
+    loadUser();
+    window.addEventListener("authChanged", loadUser);
+
+    return () => {
+      window.removeEventListener("authChanged", loadUser);
+    };
+  }, []);
+
+  const userInitials = user
+    ? user.nombreCompleto
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "??";
+
+  const handleLogout = async () => {
+    await authLogout();            // Limpia Firebase y localStorage
+    window.dispatchEvent(new Event("authChanged")); // Actualiza el estado
+    window.location.href = "/";    // Redirige al inicio
+  };
+
+  const isActive = (path: string) => {
+    if (path === "/") return pathname === path;
+    return pathname.startsWith(path);
+  };
   return (
     <div className="flex min-h-screen" style={{ background: "#fdf4ef" }}>
 
@@ -104,14 +145,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white flex-shrink-0"
                     style={{ background: "#d4663a" }}
                   >
-                    {mockUser.initials}
+                    {userInitials}
                   </div>
                   <div className="hidden sm:block text-left">
                     <p className="text-xs font-semibold leading-none" style={{ color: "#f4e8d9" }}>
-                      {mockUser.name}
+                      {user?.nombreCompleto || "Admin"}
                     </p>
                     <p className="text-[10px] mt-0.5 leading-none" style={{ color: "#c4956a" }}>
-                      {mockUser.email}
+                      {user?.email || ""}
                     </p>
                   </div>
                 </button>
@@ -119,8 +160,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               <DropdownMenuContent align="end" className="w-52 border-[#e8d8cc]">
                 <div className="px-3 py-2.5 border-b border-[#e8d8cc]">
-                  <p className="text-xs font-semibold text-[#2a1810]">{mockUser.name}</p>
-                  <p className="text-[11px] text-[#8c7b6e] mt-0.5">{mockUser.email}</p>
+                  <p className="text-xs font-semibold text-[#2a1810]">
+                    {user?.nombreCompleto || "Usuario"}
+                  </p>
+                  <p className="text-[11px] text-[#8c7b6e] mt-0.5">
+                    {user?.email || ""}
+                  </p>
                 </div>
 
                 <DropdownMenuItem className="gap-2 mt-1 cursor-pointer text-sm text-[#4a3020]">
@@ -132,10 +177,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 <DropdownMenuItem
                   className="gap-2 cursor-pointer text-sm text-red-600 focus:text-red-600 focus:bg-red-50"
-                  onClick={() => {
-                    // 🔥 Aquí conectas: await signOut(auth); router.push("/login")
-                    console.log("Cerrar sesión");
-                  }}
+                  onClick={handleLogout}
                 >
                   <LogOut size={14} />
                   Cerrar sesión

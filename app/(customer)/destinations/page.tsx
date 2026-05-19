@@ -1,19 +1,21 @@
-// app/destinos/page.tsx (o pages/destinos.tsx)
+// app/destinos/page.tsx
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Clock, MapPin, Star, Filter, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { obtenerPaquetes } from "@/lib/paquetes";
 import { PaqueteResumen } from "@/types";
 
+const ITEMS_PER_PAGE = 9;
+
 export default function DestinosPage() {
   const [paquetes, setPaquetes] = useState<PaqueteResumen[]>([]);
   const [cargando, setCargando] = useState(true);
   const [selectedDuration, setSelectedDuration] = useState<string>("all");
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
-  const carruselRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Obtener paquetes desde la API
   useEffect(() => {
@@ -44,37 +46,29 @@ export default function DestinosPage() {
     return matchDuration && matchLocation;
   });
 
-  // Duplicamos los items para crear el efecto infinito
-  const itemsMostrados = [...paquetesFiltrados, ...paquetesFiltrados];
+  // Paginación
+  const totalPages = Math.ceil(paquetesFiltrados.length / ITEMS_PER_PAGE);
+  const paginatedPaquetes = paquetesFiltrados.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
-  // Auto-scroll infinito (de derecha a izquierda)
+  // Resetear página al cambiar filtros
   useEffect(() => {
-    if (!carruselRef.current || itemsMostrados.length === 0) return;
-    const container = carruselRef.current;
-    let animationFrame: number;
-    const speed = 0.5; // px por frame
-
-    const desplazar = () => {
-      if (container.scrollLeft >= container.scrollWidth / 2) {
-        container.scrollLeft = 0;
-      } else {
-        container.scrollLeft += speed;
-      }
-      animationFrame = requestAnimationFrame(desplazar);
-    };
-
-    animationFrame = requestAnimationFrame(desplazar);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [itemsMostrados]);
+    setCurrentPage(1);
+  }, [selectedDuration, selectedLocation]);
 
   const limpiarFiltros = () => {
     setSelectedDuration("all");
     setSelectedLocation("all");
   };
 
+  // Generar array de páginas para los botones
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   return (
     <div className="min-h-screen bg-[#f5eee6]">
-      {/* HERO */}
+      {/* HERO (sin cambios) */}
       <section className="relative h-96 overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1563817714600-1dda672c234e"
@@ -98,7 +92,7 @@ export default function DestinosPage() {
         </div>
       </section>
 
-      {/* FILTROS */}
+      {/* FILTROS (sin cambios) */}
       <section className="py-6 bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 flex flex-wrap gap-4 items-center">
           <Filter className="text-[#d4663a]" size={20} />
@@ -144,8 +138,8 @@ export default function DestinosPage() {
         </div>
       </section>
 
-      {/* CARRUSEL INFINITO DE PAQUETES */}
-      <section className="py-16 overflow-hidden">
+      {/* CUADRÍCULA DE PAQUETES CON PAGINACIÓN */}
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -167,78 +161,111 @@ export default function DestinosPage() {
               No se encontraron paquetes con esos filtros.
             </p>
           ) : (
-            <div
-              ref={carruselRef}
-              className="flex gap-6 py-4 overflow-x-hidden"
-              style={{ scrollBehavior: "smooth" }}
-            >
-              {itemsMostrados.map((paquete, index) => (
-                <motion.div
-                  key={`${paquete.id}-${index}`}
-                  className="min-w-[300px] md:min-w-[350px] bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex-shrink-0 overflow-hidden group"
-                  whileHover={{ scale: 1.02 }}
-                >
-                  {/* Imagen con overlay */}
-                  <div className="relative h-52 overflow-hidden">
-                    <img
-                      src={paquete.fotoPrincipal || "/images/placeholder.jpg"}
-                      alt={paquete.nombre}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                    <div className="absolute bottom-3 left-4 right-4">
-                      <h3 className="text-xl font-bold text-white drop-shadow-lg">
-                        {paquete.nombre}
-                      </h3>
-                      {paquete.subtitulo && (
-                        <p className="text-sm text-white/80 drop-shadow">
-                          {paquete.subtitulo}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Contenido */}
-                  <div className="p-5">
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {paquete.lugares.map((lugar) => (
-                        <span
-                          key={lugar}
-                          className="bg-[#f4e8d9] text-[#2a1810] text-xs px-2 py-1 rounded-full inline-flex items-center gap-1"
-                        >
-                          <MapPin size={10} /> {lugar}
-                        </span>
-                      ))}
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedPaquetes.map((paquete) => (
+                  <motion.div
+                    key={paquete.id}
+                    className="bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 overflow-hidden group"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    {/* Imagen con overlay */}
+                    <div className="relative h-52 overflow-hidden">
+                      <img
+                        src={paquete.fotoPrincipal || "/images/placeholder.jpg"}
+                        alt={paquete.nombre}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4">
+                        <h3 className="text-xl font-bold text-white drop-shadow-lg">
+                          {paquete.nombre}
+                        </h3>
+                        {paquete.subtitulo && (
+                          <p className="text-sm text-white/80 drop-shadow">
+                            {paquete.subtitulo}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        <span>
-                          {paquete.duracionDias} día{paquete.duracionDias > 1 ? "s" : ""}
-                          {paquete.duracionNoches ? ` · ${paquete.duracionNoches} noches` : ""}
+                    {/* Contenido */}
+                    <div className="p-5">
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {paquete.lugares.map((lugar) => (
+                          <span
+                            key={lugar}
+                            className="bg-[#f4e8d9] text-[#2a1810] text-xs px-2 py-1 rounded-full inline-flex items-center gap-1"
+                          >
+                            <MapPin size={10} /> {lugar}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          <span>
+                            {paquete.duracionDias} día{paquete.duracionDias > 1 ? "s" : ""}
+                            {paquete.duracionNoches ? ` · ${paquete.duracionNoches} noches` : ""}
+                          </span>
+                        </div>
+                        <span className="text-lg font-bold text-[#d4663a]">
+                          S/ {paquete.precioBase.toFixed(2)}
                         </span>
                       </div>
-                      <span className="text-lg font-bold text-[#d4663a]">
-                        S/ {paquete.precioBase.toFixed(2)}
-                      </span>
-                    </div>
 
-                    <Link
-                      href={`/paquetes/${paquete.id}`}
-                      className="block text-center bg-[#d4663a] text-white py-2 rounded-lg hover:bg-[#b8542d] transition font-medium"
+                      <Link
+                        href={`/paquetes/${paquete.id}`}
+                        className="block text-center bg-[#d4663a] text-white py-2 rounded-lg hover:bg-[#b8542d] transition font-medium"
+                      >
+                        Ver Detalles
+                      </Link>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* PAGINACIÓN */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-10">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Anterior
+                  </button>
+
+                  {pages.map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-lg text-sm font-medium transition ${
+                        currentPage === page
+                          ? "bg-[#d4663a] text-white"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      }`}
                     >
-                      Ver Detalles
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
 
-      {/* CTA FINAL */}
+      {/* CTA FINAL (sin cambios) */}
       <section className="py-20 bg-[#2a1810] text-white text-center">
         <Star className="mx-auto mb-4 text-[#d4663a]" size={28} />
         <h2 className="text-4xl font-bold mb-4">¿No encuentras lo que buscas?</h2>

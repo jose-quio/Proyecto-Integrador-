@@ -23,8 +23,8 @@ type Foto = {
   url: string;
   alt: string;
   orden: number;
-  subiendo?: boolean; // true mientras se sube a Cloudinary
-  error?: string;     // mensaje si falló la subida
+  subiendo?: boolean; 
+  error?: string;     
 };
 
 type DiaItinerario = {
@@ -35,12 +35,12 @@ type DiaItinerario = {
 };
 
 type LugarSeleccionado = {
-  id: string;   // ID real de la BD
+  id: string;   
   nombre: string;
 };
 
 type ProveedorSeleccionado = {
-  id: string;   // ID real de la BD
+  id: string;  
   nombre: string;
   tipo: string;
   rol: string;

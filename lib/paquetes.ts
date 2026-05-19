@@ -63,8 +63,8 @@ export async function crearPaquete(data: PaqueteCreateRequest): Promise<PaqueteD
 export async function editarPaquete(
   id: string,
   data: PaqueteCreateRequest
-): Promise<PaqueteDetalle> {
-  const res = await api.put<PaqueteDetalle>(`/api/paquetes/${id}`, data);
+): Promise<PaqueteCreateRequest> {
+  const res = await api.put<PaqueteCreateRequest>(`/api/paquetes/${id}`, data);
   return res.data;
 }
  
