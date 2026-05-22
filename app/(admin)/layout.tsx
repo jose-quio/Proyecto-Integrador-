@@ -168,12 +168,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {user?.email || ""}
                   </p>
                 </div>
-
+                <Link href="/">
                 <DropdownMenuItem className="gap-2 mt-1 cursor-pointer text-sm text-[#4a3020]">
                   <Settings size={14} className="text-[#8c7b6e]" />
-                  Mi perfil
+                  Vista Cliente
                 </DropdownMenuItem>
-
+                </Link>
                 <DropdownMenuSeparator className="bg-[#e8d8cc]" />
 
                 <DropdownMenuItem

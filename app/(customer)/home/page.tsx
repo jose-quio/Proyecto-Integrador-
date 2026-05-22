@@ -117,7 +117,7 @@ function HeroSlider() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/tours"
+                href="/destinations"
                 className="group px-8 py-4 bg-[#d4663a] text-white rounded-full hover:bg-[#c15530] flex items-center gap-2"
               >
                 Ver Tours
@@ -289,7 +289,7 @@ function PaquetesCarousel() {
                   </span>
                 </div>
                 <Link
-                  href={`/packages/${paquete.id}`}
+                  href={`/paquetes/${paquete.id}`}
                   className="mt-4 block text-center w-full py-2 bg-[#d4663a] text-white rounded-lg hover:bg-[#b8542d] transition-colors"
                 >
                   Ver Paquete
@@ -352,7 +352,7 @@ export default function HomePage() {
       {/* CTA */}
       <section className="py-20 bg-[#2a1810] text-white text-center">
         <h2 className="text-4xl font-bold mb-6">¿Listo para tu Próxima Aventura?</h2>
-        <Link href="/checkout" className="px-8 py-4 bg-[#d4663a] rounded-full">
+        <Link href="/reservar" className="px-8 py-4 bg-[#d4663a] rounded-full">
           Reservar Ahora
         </Link>
       </section>

@@ -273,7 +273,7 @@ export default function DestinosPage() {
           Creamos experiencias personalizadas según tus gustos y tiempo.
         </p>
         <Link
-          href="/booking"
+          href="/reservar"
           className="inline-flex items-center gap-2 bg-[#d4663a] px-6 py-3 rounded-full hover:bg-[#b8542d] transition shadow-lg"
         >
           Solicitar Tour Personalizado

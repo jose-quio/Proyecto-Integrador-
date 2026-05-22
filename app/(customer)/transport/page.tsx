@@ -108,9 +108,7 @@ export default function TransportPage() {
                     className="w-full h-full object-cover"
                   />
 
-                  <div className="absolute top-4 right-4 bg-[#d4663a] text-white px-3 py-1 rounded-full text-sm">
-                    {vehicle.price}
-                  </div>
+                  
                 </div>
 
                 {/* Info */}
@@ -133,9 +131,7 @@ export default function TransportPage() {
                     ))}
                   </ul>
 
-                  <button className="w-full mt-6 py-3 bg-[#d4663a] text-white rounded-lg hover:bg-[#c15530]">
-                    Reservar
-                  </button>
+                  
                 </div>
               </motion.div>
             ))}

@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { getMisReservas, cancelarReserva, ReservaResponse } from "@/lib/reservas";
 import { ModalPago } from "@/components/layout/ModalPago";
+import PerfilCard from "@/components/layout/PerfilCard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -43,6 +44,10 @@ export default function DashboardPage() {
   // Detalle expandido
   const [reservaExpandida, setReservaExpandida] = useState<string | null>(null);
 
+  // ----- PAGINACIÓN -----
+  const [paginaActual, setPaginaActual] = useState(0);
+  const RESERVAS_POR_PAGINA = 2;
+
   // Cargar usuario y reservas
   useEffect(() => {
     const stored = localStorage.getItem("usuario");
@@ -60,6 +65,37 @@ export default function DashboardPage() {
       })
       .finally(() => setCargandoReservas(false));
   }, [router]);
+
+  // Calcular total de páginas
+  const totalPaginas = Math.ceil(reservas.length / RESERVAS_POR_PAGINA);
+  // Ajustar página actual si se queda fuera de rango (ej. al cancelar última reserva)
+  useEffect(() => {
+    if (paginaActual >= totalPaginas && totalPaginas > 0) {
+      setPaginaActual(totalPaginas - 1);
+    } else if (totalPaginas === 0) {
+      setPaginaActual(0);
+    }
+  }, [reservas, paginaActual, totalPaginas]);
+
+  // Obtener reservas de la página actual
+  const reservasPaginadas = reservas.slice(
+    paginaActual * RESERVAS_POR_PAGINA,
+    (paginaActual + 1) * RESERVAS_POR_PAGINA
+  );
+
+  const irPaginaAnterior = () => {
+    if (paginaActual > 0) {
+      setPaginaActual(paginaActual - 1);
+      setReservaExpandida(null); // cerrar detalle al cambiar de página
+    }
+  };
+
+  const irPaginaSiguiente = () => {
+    if (paginaActual + 1 < totalPaginas) {
+      setPaginaActual(paginaActual + 1);
+      setReservaExpandida(null);
+    }
+  };
 
   const handleCancelar = async (id: string) => {
     try {
@@ -124,36 +160,7 @@ export default function DashboardPage() {
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* PERFIL */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-          >
-            <div className="flex flex-col items-center">
-              <div className="w-24 h-24 bg-[#b86a3c] rounded-full flex items-center justify-center shadow-lg">
-                <User size={40} className="text-white" />
-              </div>
-              <h2 className="mt-4 text-xl font-bold">{usuario.nombreCompleto}</h2>
-              <p className="text-gray-500">{usuario.email}</p>
-            </div>
-
-            <hr className="my-6" />
-
-            <div className="space-y-4 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Mail size={16} /> {usuario.email}
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone size={16} /> {usuario.telefono || "—"}
-              </div>
-              <div className="flex items-center gap-2">
-                <User size={16} /> DNI/Pasaporte: {usuario.dniPasaporte || "—"}
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin size={16} /> Arequipa, Perú
-              </div>
-            </div>
-          </motion.div>
+          <PerfilCard />
 
           {/* RESERVAS */}
           <div className="md:col-span-2 space-y-6">
@@ -184,7 +191,8 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {reservas.map((reserva) => (
+            {/* Lista paginada de reservas */}
+            {reservasPaginadas.map((reserva) => (
               <motion.div
                 key={reserva.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -296,6 +304,37 @@ export default function DashboardPage() {
                 </AnimatePresence>
               </motion.div>
             ))}
+
+            {/* Controles de paginación (solo si hay más de una página) */}
+            {totalPaginas > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-4">
+                <button
+                  onClick={irPaginaAnterior}
+                  disabled={paginaActual === 0}
+                  className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
+                    paginaActual === 0
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-[#d4663a] hover:bg-gray-100 shadow"
+                  }`}
+                >
+                  <ChevronDown className="rotate-90" size={16} /> Anterior
+                </button>
+                <span className="text-sm text-gray-600">
+                  Página {paginaActual + 1} de {totalPaginas}
+                </span>
+                <button
+                  onClick={irPaginaSiguiente}
+                  disabled={paginaActual + 1 >= totalPaginas}
+                  className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
+                    paginaActual + 1 >= totalPaginas
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-white text-[#d4663a] hover:bg-gray-100 shadow"
+                  }`}
+                >
+                  Siguiente <ChevronDown className="-rotate-90" size={16} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

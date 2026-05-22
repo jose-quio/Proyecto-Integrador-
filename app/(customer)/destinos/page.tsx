@@ -167,12 +167,9 @@ export default function DestinosPage() {
                     Podemos crear un itinerario personalizado para ti
                 </p>
 
-                <Link href="/reservar">
-                    <button className="bg-[#d4663a] px-8 py-3 rounded-full font-semibold shadow-lg hover:bg-[#c15530] hover:scale-110 active:scale-95 transition duration-300">
-                        Solicitar Tour Personalizado
-                    </button>
+                <Link href="/reservar" className="px-8 py-4 bg-[#d4663a] rounded-full">
+                Reservar Ahora
                 </Link>
-
             </section>
 
         </div>

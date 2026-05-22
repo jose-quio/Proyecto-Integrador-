@@ -103,14 +103,6 @@ function SubNavbar() {
     }
   };
 
-  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    e.preventDefault();
-    const elemento = document.getElementById(id);
-    if (elemento) {
-      elemento.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
   return (
     <nav className="hidden md:block bg-white/80 backdrop-blur-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4">
@@ -127,7 +119,6 @@ function SubNavbar() {
                   }`}
                 >
                   {sec.label}
-                  
                 </a>
               </li>
             );
@@ -138,12 +129,65 @@ function SubNavbar() {
   );
 }
 
+// Componente para renderizar Markdown con espaciado mejorado
+function MarkdownRenderer({ content }: { content: string }) {
+  return (
+    <div className="markdown-content">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          // Párrafos con margen inferior y line-height adecuado
+          p: ({ node, ...props }) => (
+            <p className="mb-5 leading-relaxed text-gray-700" {...props} />
+          ),
+          // Listas no ordenadas con espacio entre items
+          ul: ({ node, ...props }) => (
+            <ul className="space-y-3 mb-5 list-disc pl-6" {...props} />
+          ),
+          // Listas ordenadas
+          ol: ({ node, ...props }) => (
+            <ol className="space-y-3 mb-5 list-decimal pl-6" {...props} />
+          ),
+          // Elementos de lista con margen y padding
+          li: ({ node, ...props }) => (
+            <li className="mb-1 leading-relaxed" {...props} />
+          ),
+          // Encabezados con más espacio superior
+          h1: ({ node, ...props }) => (
+            <h1 className="text-3xl font-bold mt-8 mb-4 text-[#2a1810]" {...props} />
+          ),
+          h2: ({ node, ...props }) => (
+            <h2 className="text-2xl font-semibold mt-6 mb-3 text-[#2a1810]" {...props} />
+          ),
+          h3: ({ node, ...props }) => (
+            <h3 className="text-xl font-semibold mt-5 mb-2 text-[#2a1810]" {...props} />
+          ),
+          // Negritas con color destacado
+          strong: ({ node, ...props }) => (
+            <strong className="font-semibold text-[#d4663a]" {...props} />
+          ),
+          // Separadores horizontales
+          hr: ({ node, ...props }) => (
+            <hr className="my-6 border-gray-300" {...props} />
+          ),
+          // Bloques de cita
+          blockquote: ({ node, ...props }) => (
+            <blockquote className="border-l-4 border-[#d4663a] pl-4 italic my-4 text-gray-600" {...props} />
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 // Acordeón para el itinerario
 function ItinerarioAccordion({ itinerario }: { itinerario: { diaNumero: number; titulo: string; descripcionMd?: string }[] }) {
   const [abierto, setAbierto] = useState<number | null>(null);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       {itinerario.map((dia, idx) => (
         <div key={idx} className="border border-gray-200 rounded-xl overflow-hidden">
           <button
@@ -159,8 +203,8 @@ function ItinerarioAccordion({ itinerario }: { itinerario: { diaNumero: number; 
             {abierto === idx ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
           </button>
           {abierto === idx && dia.descripcionMd && (
-            <div className="p-4 prose prose-sm max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{dia.descripcionMd}</ReactMarkdown>
+            <div className="p-6 bg-white">
+              <MarkdownRenderer content={dia.descripcionMd} />
             </div>
           )}
         </div>
@@ -259,19 +303,17 @@ export default function PaqueteDetallePage() {
             {/* Resumen */}
             {paquete.resumenMd && (
               <section id="resumen" className="scroll-mt-24">
-                <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
+                <h2 className="text-3xl font-bold text-[#2a1810] mb-6 border-l-4 border-[#d4663a] pl-4">
                   Resumen
                 </h2>
-                <div className="prose max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{paquete.resumenMd}</ReactMarkdown>
-                </div>
+                <MarkdownRenderer content={paquete.resumenMd} />
               </section>
             )}
 
             {/* Itinerario */}
             {paquete.itinerario && paquete.itinerario.length > 0 && (
               <section id="itinerario" className="scroll-mt-24">
-                <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
+                <h2 className="text-3xl font-bold text-[#2a1810] mb-6 border-l-4 border-[#d4663a] pl-4">
                   Itinerario
                 </h2>
                 <ItinerarioAccordion itinerario={paquete.itinerario} />
@@ -281,55 +323,47 @@ export default function PaqueteDetallePage() {
             {/* Incluye */}
             {paquete.incluyeMd && (
               <section id="incluye" className="scroll-mt-24">
-                <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
+                <h2 className="text-3xl font-bold text-[#2a1810] mb-6 border-l-4 border-[#d4663a] pl-4">
                   Incluye
                 </h2>
-                <div className="prose max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{paquete.incluyeMd}</ReactMarkdown>
-                </div>
+                <MarkdownRenderer content={paquete.incluyeMd} />
               </section>
             )}
 
             {/* No Incluye */}
             {paquete.noIncluyeMd && (
               <section id="no-incluye" className="scroll-mt-24">
-                <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
+                <h2 className="text-3xl font-bold text-[#2a1810] mb-6 border-l-4 border-[#d4663a] pl-4">
                   No Incluye
                 </h2>
-                <div className="prose max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{paquete.noIncluyeMd}</ReactMarkdown>
-                </div>
+                <MarkdownRenderer content={paquete.noIncluyeMd} />
               </section>
             )}
 
             {/* Recomendaciones */}
             {paquete.recomendacionesMd && (
               <section id="recomendaciones" className="scroll-mt-24">
-                <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
+                <h2 className="text-3xl font-bold text-[#2a1810] mb-6 border-l-4 border-[#d4663a] pl-4">
                   Recomendaciones
                 </h2>
-                <div className="prose max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{paquete.recomendacionesMd}</ReactMarkdown>
-                </div>
+                <MarkdownRenderer content={paquete.recomendacionesMd} />
               </section>
             )}
 
             {/* Preguntas */}
             {paquete.preguntasMd && (
               <section id="preguntas" className="scroll-mt-24">
-                <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
+                <h2 className="text-3xl font-bold text-[#2a1810] mb-6 border-l-4 border-[#d4663a] pl-4">
                   Preguntas Frecuentes
                 </h2>
-                <div className="prose max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{paquete.preguntasMd}</ReactMarkdown>
-                </div>
+                <MarkdownRenderer content={paquete.preguntasMd} />
               </section>
             )}
 
             {/* Mapa */}
             {paquete.mapaUrl && (
               <section id="mapa" className="scroll-mt-24">
-                <h2 className="text-3xl font-bold text-[#2a1810] mb-4 border-l-4 border-[#d4663a] pl-4">
+                <h2 className="text-3xl font-bold text-[#2a1810] mb-6 border-l-4 border-[#d4663a] pl-4">
                   Mapa del Recorrido
                 </h2>
                 <div className="w-full h-96 rounded-2xl overflow-hidden shadow-lg">
