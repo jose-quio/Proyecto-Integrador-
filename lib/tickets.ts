@@ -77,6 +77,15 @@ export async function getTicketsAdmin(page = 0, size = 20, estado?: EstadoTicket
   return res.data;
 }
 
+export async function getTicketDetalleAdmin(
+  id: string
+): Promise<TicketDetalle> {
+  const res = await api.get<TicketDetalle>(
+    `/api/admin/tickets/${id}`
+  );
+  return res.data;
+}
+
 export async function responderTicketAdmin(id: string, mensaje: string): Promise<TicketDetalle> {
   const res = await api.post<TicketDetalle>(`/api/admin/tickets/${id}/responder`, { mensaje });
   return res.data;

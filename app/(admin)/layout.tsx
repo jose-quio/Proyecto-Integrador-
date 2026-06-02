@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import {
   Home, Map, CalendarCheck, Users,
   Truck, Settings, PanelLeft,
-  CreditCard, BarChart3, LogOut, Bell,
+  CreditCard, BarChart3, LogOut, Bell,LifeBuoy,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ const navLinks = [
   { href: "/admin/usuarios",   icon: <Users size={18} />,         label: "Usuarios"    },
   { href: "/admin/proveedores",icon: <Truck size={18} />,         label: "Proveedores" },
   { href: "/admin/pagos",      icon: <CreditCard size={18} />,    label: "Pagos"       },
+  { href: "/admin/soporte",    icon: <LifeBuoy size={18} />,      label: "Soporte"     },
   { href: "/admin/reportes",   icon: <BarChart3 size={18} />,     label: "Reportes"    },
 ];
 

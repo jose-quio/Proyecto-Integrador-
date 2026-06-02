@@ -26,10 +26,19 @@ export default function NuevoTicketModal({ onCerrar }: Props) {
   const [guardando, setGuardando]       = useState(false);
   const [error, setError]               = useState("");
 
-  useEffect(() => {
+  /*useEffect(() => {
     // Carga las reservas del cliente para el selector
     getMisReservas().then(setReservas).catch(() => {});
-  }, []);
+  }, []);*/
+
+  useEffect(() => {
+  getMisReservas()
+    .then((data) => {
+      console.log("Reservas:", data);
+      setReservas(data);
+    })
+    .catch(console.error);
+}, []);
 
   async function crear() {
     if (!asunto.trim()) { setError("El asunto es obligatorio"); return; }
@@ -108,17 +117,27 @@ export default function NuevoTicketModal({ onCerrar }: Props) {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Reserva relacionada <span className="text-gray-400 text-xs">(opcional)</span>
               </label>
-              <select value={reservaId} onChange={(e) => setReservaId(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d4663a]/30 focus:border-[#d4663a]">
-                <option value="">Sin reserva específica</option>
-                {reservas
-                  .filter((r) => r.estado !== "CANCELADA")
-                  .map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.paqueteNombre} — {r.fechaSalida}
-                    </option>
-                  ))}
-              </select>
+              {reservas.filter(r => r.estado !== "CANCELADA").length === 0 ? (
+                <div className="border border-amber-200 bg-amber-50 rounded-xl p-3 text-sm text-amber-700">
+                  No tienes reservas activas para asociar a esta solicitud.
+                </div>
+              ) : (
+                <select
+                  value={reservaId}
+                  onChange={(e) => setReservaId(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#d4663a]/30 focus:border-[#d4663a]"
+                >
+                  <option value="">Sin reserva específica</option>
+
+                  {reservas
+                    .filter((r) => r.estado !== "CANCELADA")
+                    .map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.paqueteNombre} — {r.fechaSalida}
+                      </option>
+                    ))}
+                </select>
+              )}
             </div>
           )}
 
