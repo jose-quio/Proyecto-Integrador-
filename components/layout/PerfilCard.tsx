@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -8,6 +9,7 @@ import {
   CheckCircle2, AlertCircle,
 } from "lucide-react";
 import { getPerfil, actualizarPerfil, PerfilCompleto } from "@/lib/perfil";
+import { useRouter } from "next/router";
 
 // ── Campo de solo lectura ─────────────────────────────────────
 function CampoInfo({ icon, label, value }: {
@@ -243,6 +245,7 @@ export default function PerfilCard() {
           >
             <Pencil size={15} /> Editar perfil
           </button>
+          
         ) : (
           <div className="flex gap-2">
             <button onClick={cancelarEdicion} disabled={guardando}
@@ -257,6 +260,19 @@ export default function PerfilCard() {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="mt-6">
+        <button
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 transition-all font-medium shadow-sm"
+        >
+          <Link
+            href="/soporte"
+          >
+            ¿Necesitas ayuda?
+          </Link>
+          
+        </button>
       </div>
     </motion.div>
   );
