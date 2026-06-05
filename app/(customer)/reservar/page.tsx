@@ -14,7 +14,7 @@ import api from "@/lib/axios";
 import { PaqueteResumen } from "@/types";
 
 // ── Tipos locales ─────────────────────────────────────────────
-type Paso = 1 | 2 | 3 | 4;
+type Paso = 1 | 2 | 3;
 
 interface UsuarioLocal {
   id?: string;
@@ -27,7 +27,7 @@ interface UsuarioLocal {
 
 // ── Indicador de pasos ────────────────────────────────────────
 function PasoIndicador({ paso, actual }: { paso: number; actual: Paso }) {
-  const labels = ["Tus datos", "Reserva", "Acompañantes", "Resumen"];
+  const labels = ["Reserva", "Acompañantes", "Resumen"];
   const completado = paso < actual;
   const activo = paso === actual;
   return (
@@ -260,20 +260,7 @@ export default function ReservarPage() {
     : 0;
 
   // ── Paso 1: completar datos personales ───────────────────
-  async function guardarDatosPersonales() {
-    if (!dniPasaporte.trim()) { setError("El DNI o pasaporte es obligatorio"); return; }
-    setError("");
-    setCargando(true);
-    try {
-      // Actualiza el perfil del usuario si faltan datos
-      await api.put("/api/usuarios/perfil", { dniPasaporte, telefono });
-      setPaso(2);
-    } catch {
-      setError("Error al guardar tus datos");
-    } finally {
-      setCargando(false);
-    }
-  }
+  
 
   // ── Paso 2: validar datos de la reserva ──────────────────
   function validarReserva() {
@@ -282,7 +269,7 @@ export default function ReservarPage() {
     const hoy = new Date().toISOString().split("T")[0];
     if (fecha <= hoy) { setError("La fecha debe ser futura"); return; }
     setError("");
-    setPaso(3);
+    setPaso(2);
   }
 
   // ── Paso 3: acompañantes ──────────────────────────────────
@@ -314,7 +301,7 @@ export default function ReservarPage() {
         acompanantes: acompanantes.filter((a) => a.nombreCompleto.trim()),
       });
       setReservaCreada({ id: res.id, precioTotal: res.precioTotal });
-      setPaso(4);
+      setPaso(3);
     } catch (err: any) {
       setError(err?.response?.data?.error || "Error al crear la reserva");
     } finally {
@@ -371,11 +358,8 @@ export default function ReservarPage() {
       {/* Indicador de pasos */}
       <div className="max-w-lg mx-auto mb-8">
         <div className="relative flex items-center justify-between">
-          <div className="absolute top-4 left-8 right-8 h-0.5 bg-gray-200 z-0">
-            <div className="h-full bg-[#c7663c] transition-all duration-500"
-              style={{ width: `${((paso - 1) / 3) * 100}%` }} />
-          </div>
-          {[1, 2, 3, 4].map((p) => (
+          
+          {[1, 2, 3].map((p) => (
             <PasoIndicador key={p} paso={p} actual={paso} />
           ))}
         </div>
@@ -438,68 +422,10 @@ export default function ReservarPage() {
 
           <div className="p-8 space-y-6">
 
-            {/* ─── PASO 1: Datos personales ─── */}
-            {paso === 1 && (
-              <div className="space-y-5">
-                <h3 className="text-lg font-bold text-gray-800">Tus datos personales</h3>
-
-                {!usuario ? (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
-                    <p className="font-semibold mb-1">Debes iniciar sesión para reservar</p>
-                    <button onClick={() => router.push("/login")}
-                      className="text-[#c7663c] font-semibold hover:underline">
-                      Ir al login →
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Nombre completo</label>
-                        <div className="relative mt-1">
-                          <User size={16} className="absolute left-3 top-3 text-gray-400" />
-                          <input type="text" value={usuario.nombreCompleto} disabled
-                            className="w-full border border-gray-200 p-2.5 pl-9 rounded-lg bg-gray-50 text-gray-500 text-sm" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Correo electrónico</label>
-                        <div className="relative mt-1">
-                          <Mail size={16} className="absolute left-3 top-3 text-gray-400" />
-                          <input type="email" value={usuario.email} disabled
-                            className="w-full border border-gray-200 p-2.5 pl-9 rounded-lg bg-gray-50 text-gray-500 text-sm" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">
-                          DNI / Pasaporte <span className="text-red-500">*</span>
-                        </label>
-                        <input type="text" value={dniPasaporte}
-                          onChange={(e) => setDniPasaporte(e.target.value)}
-                          placeholder="Ej. 12345678 o AB123456"
-                          className="w-full mt-1 border border-gray-200 p-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c7663c]/30 focus:border-[#c7663c]" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Teléfono</label>
-                        <div className="relative mt-1">
-                          <Phone size={16} className="absolute left-3 top-3 text-gray-400" />
-                          <input type="tel" value={telefono}
-                            onChange={(e) => setTelefono(e.target.value)}
-                            placeholder="+51 999 888 777"
-                            className="w-full border border-gray-200 p-2.5 pl-9 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c7663c]/30 focus:border-[#c7663c]" />
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+            
 
             {/* ─── PASO 2: Datos de la reserva ─── */}
-            {paso === 2 && (
+            {paso === 1 && (
               <div className="space-y-5">
                 <h3 className="text-lg font-bold text-gray-800">Detalle de tu reserva</h3>
 
@@ -568,7 +494,7 @@ export default function ReservarPage() {
             )}
 
             {/* ─── PASO 3: Acompañantes ─── */}
-            {paso === 3 && (
+            {paso === 2 && (
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-800">Acompañantes</h3>
@@ -637,7 +563,7 @@ export default function ReservarPage() {
             )}
 
             {/* ─── PASO 4: Resumen ─── */}
-            {paso === 4 && (
+            {paso === 3 && (
               <div className="space-y-5">
                 <h3 className="text-lg font-bold text-gray-800">Resumen de tu reserva</h3>
 
@@ -698,20 +624,14 @@ export default function ReservarPage() {
               )}
               {paso === 1 && <div />}
 
+              
               {paso === 1 && (
-                <button onClick={guardarDatosPersonales} disabled={cargando || !usuario}
-                  className="px-6 py-2.5 bg-[#c7663c] hover:bg-[#a9552f] disabled:opacity-50 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-all">
-                  {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  Siguiente <ChevronRight className="h-4 w-4" />
-                </button>
-              )}
-              {paso === 2 && (
                 <button onClick={validarReserva}
                   className="px-6 py-2.5 bg-[#c7663c] hover:bg-[#a9552f] text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-all">
                   Siguiente <ChevronRight className="h-4 w-4" />
                 </button>
               )}
-              {paso === 3 && (
+              {paso === 2 && (
                 <button onClick={crearReservaFn} disabled={cargando}
                   className="px-6 py-2.5 bg-[#c7663c] hover:bg-[#a9552f] disabled:opacity-50 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-all">
                   {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

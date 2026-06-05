@@ -37,18 +37,18 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/tours" className="hover:text-[#d4663a] transition-colors">
+                <Link href="/detinations" className="hover:text-[#d4663a] transition-colors">
                   Paquetes Tours
                 </Link>
               </li>
               <li>
-                <Link href="/destinations" className="hover:text-[#d4663a] transition-colors">
-                  Destinos
+                <Link href="/reservar" className="hover:text-[#d4663a] transition-colors">
+                  Reservar
                 </Link>
               </li>
               <li>
-                <Link href="/checkout" className="hover:text-[#d4663a] transition-colors">
-                  Reservar Ahora
+                <Link href="/soporte" className="hover:text-[#d4663a] transition-colors">
+                  Soporte
                 </Link>
               </li>
             </ul>

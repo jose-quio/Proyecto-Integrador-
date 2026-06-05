@@ -38,25 +38,25 @@ const galeriaDestinos = [
     subtitulo: "Visita",
     titulo: "Arequipa",
     imagen: "/1200 - 1.jpeg",
-    enlace: "/destinations/arequipa",
+    //enlace: "/destinations/arequipa",
   },
   {
     subtitulo: "Visita",
     titulo: "Cusco",
     imagen: "/1200 - 2.jpg",
-    enlace: "/destinations/cusco",
+    //enlace: "/destinations/cusco",
   },
   {
     subtitulo: "Visita",
     titulo: "Puno",
     imagen: "/1200 - 3.webp",
-    enlace: "/destinations/puno",
+    //enlace: "/destinations/puno",
   },
   {
     subtitulo: "Visita",
     titulo: "Ica",
     imagen: "/1200 - 4.jpg",
-    enlace: "/destinations/ica",
+    //enlace: "/destinations/ica",
   },
 ];
 
