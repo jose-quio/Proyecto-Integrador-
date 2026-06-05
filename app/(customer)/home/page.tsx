@@ -160,7 +160,7 @@ function InteractiveGallery() {
                 <p className="text-sm uppercase text-[#f4e8d9]">{destino.subtitulo}</p>
                 <h3 className="text-2xl font-bold">{destino.titulo}</h3>
                 <Link
-                  href={destino.enlace}
+                  href= "#"
                   className="inline-block mt-2 text-[#d4663a] hover:text-white transition-colors"
                 >
                   Ver Más →
