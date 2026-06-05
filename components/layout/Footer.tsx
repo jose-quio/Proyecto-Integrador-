@@ -37,7 +37,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/detinations" className="hover:text-[#d4663a] transition-colors">
+                <Link href="/destinations" className="hover:text-[#d4663a] transition-colors">
                   Paquetes Tours
                 </Link>
               </li>
