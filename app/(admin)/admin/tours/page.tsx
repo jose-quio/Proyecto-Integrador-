@@ -236,7 +236,7 @@ export default function ToursAdminPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem className="gap-2"
-                          onClick={() => router.push(`/admin/tours/${p.id}`)}>
+                          >
                           <Eye className="h-4 w-4" /> Ver detalle
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2"

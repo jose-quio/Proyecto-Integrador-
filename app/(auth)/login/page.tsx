@@ -14,7 +14,7 @@ export default function AuthPage() {
   // ── Estados del formulario ────────────────────────────────
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
-    nombreCompleto: "", email: "", password: "", confirmar: "", telefono: "",
+    nombreCompleto: "", email: "", password: "", confirmar: "", telefono: "", rol: "CLIENTE"
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -89,6 +89,7 @@ export default function AuthPage() {
         email: registerData.email,
         password: registerData.password,
         telefono: registerData.telefono,
+        rol: "CLIENTE",
       });
       router.push(getRutaPorRol(res.rol));
     } catch (err: any) {

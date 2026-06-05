@@ -122,17 +122,21 @@ export default function PerfilCard() {
     } finally {
       setGuardando(false);
     }
+    console.log(form.fechaNacimiento);
   }
 
   // Formato de fecha para mostrar
   function formatearFecha(fecha?: string) {
     if (!fecha) return undefined;
-    return new Date(fecha).toLocaleDateString("es-PE", { dateStyle: "long" });
+    const [year, month, day] = fecha.split('-');
+    // Los meses en Date van de 0 a 11, por eso restamos 1
+    const fechaLocal = new Date(Number(year), Number(month) - 1, Number(day));
+    return fechaLocal.toLocaleDateString("es-PE", { dateStyle: "long" });
   }
 
   // Label de género
   function labelGenero(g?: string) {
-    const map: Record<string, string> = { M: "Masculino", F: "Femenino", otro: "Otro" };
+    const map: Record<string, string> = { M: "Masculino", F: "Femenino", otro: "No definido" };
     return g ? map[g] ?? g : undefined;
   }
 
